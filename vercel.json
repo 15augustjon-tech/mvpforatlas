@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd atlas-app && npm run build",
+  "outputDirectory": "atlas-app/.next",
+  "installCommand": "cd atlas-app && npm install",
+  "framework": "nextjs"
+}
