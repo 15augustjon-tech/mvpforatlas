@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MapPin } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MapPin, Search, X } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -26,6 +26,8 @@ export default function FeedPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const supabase = createClient();
 
   useEffect(() => {
@@ -33,9 +35,17 @@ export default function FeedPage() {
     loadSavedOpportunities();
   }, []);
 
+  // Debounce search - waits 500ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadOpportunities();
-  }, [activeFilter, profile]);
+  }, [activeFilter, profile, debouncedSearch]);
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,7 +77,7 @@ export default function FeedPage() {
     try {
       const skills = profile?.skills?.join(",") || "";
       const response = await fetch(
-        `/api/opportunities?category=${activeFilter}&skills=${encodeURIComponent(skills)}`
+        `/api/opportunities?category=${activeFilter}&skills=${encodeURIComponent(skills)}&search=${encodeURIComponent(debouncedSearch)}`
       );
       const data = await response.json();
       setOpportunities(data.opportunities || []);
@@ -147,8 +157,30 @@ export default function FeedPage() {
     <div className="min-h-screen bg-gray-light pb-20">
       <Header />
 
+      {/* Search Bar */}
+      <div className="sticky top-[57px] z-50 bg-white border-b border-gray-100 px-4 py-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search jobs, companies, skills..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-2.5 bg-gray-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Filter Bar */}
-      <div className="sticky top-[57px] z-40 bg-white border-b border-gray-100 px-4 py-3">
+      <div className="sticky top-[114px] z-40 bg-white border-b border-gray-100 px-4 py-3">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {filters.map((filter) => (
             <FilterChip

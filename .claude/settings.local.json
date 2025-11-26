@@ -9,7 +9,8 @@
       "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; npm install @supabase/ssr\")",
       "Bash(powershell -Command:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

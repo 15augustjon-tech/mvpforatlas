@@ -65,6 +65,7 @@ export async function GET(request: Request) {
   const category = searchParams.get("category") || "all";
   const userSkillsParam = searchParams.get("skills") || "";
   const userSkills = userSkillsParam ? userSkillsParam.split(",") : [];
+  const userSearch = searchParams.get("search") || "";
 
   const appId = process.env.ADZUNA_APP_ID;
   const apiKey = process.env.ADZUNA_API_KEY;
@@ -77,9 +78,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Build search query based on category
+    // Build search query based on category and user search
     let searchQuery = "intern OR entry level";
-    if (category === "internship" || category === "internships") {
+    if (userSearch) {
+      // If user searched something, use that
+      searchQuery = userSearch;
+    } else if (category === "internship" || category === "internships") {
       searchQuery = "intern internship";
     } else if (category === "job" || category === "jobs") {
       searchQuery = "entry level junior";
