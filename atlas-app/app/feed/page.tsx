@@ -230,7 +230,7 @@ export default function FeedPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="sticky top-[114px] z-40 bg-white border-b border-gray-100 px-4 py-3">
+      <div className="bg-white border-b border-gray-100 px-4 py-3">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {filters.map((filter) => (
             <FilterChip
@@ -289,7 +289,7 @@ export default function FeedPage() {
 
       {/* Weekly Stats Card */}
       <div className="px-4 py-3">
-        <div className="bg-gradient-to-r from-teal to-blue-500 rounded-card p-4 text-white">
+        <div className="bg-gradient-to-r from-[#0ea5e9] to-blue-500 rounded-card p-4 text-white">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-5 h-5" />
             <span className="font-medium">Your Week</span>
