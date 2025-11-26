@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@14 atlas-app --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas''; npx create-next-app@14 atlas-app --typescript --tailwind --eslint --app --no-src-dir --import-alias ''@/*'' --use-npm --yes\")",
+      "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; mkdir components, lib, types; mkdir lib\\supabase, lib\\api\")",
+      "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; npm install @supabase/supabase-js @supabase/auth-helpers-nextjs lucide-react date-fns\")",
+      "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; npm install @supabase/ssr\")",
+      "Bash(powershell -Command:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
