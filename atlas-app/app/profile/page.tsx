@@ -198,7 +198,7 @@ export default function ProfilePage() {
             <MapPin className="w-5 h-5 text-teal" />
             <span className="font-medium text-navy">Location</span>
           </div>
-          <p className="ml-8 text-gray-text">{profile?.location || "Bay Area"}</p>
+          <p className="ml-8 text-gray-text">{profile?.location || "California"}</p>
         </div>
 
         {/* Skills */}

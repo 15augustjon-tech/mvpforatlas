@@ -85,7 +85,7 @@ export async function GET(request: Request) {
       searchQuery = "entry level junior";
     }
 
-    const url = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=20&where=san%20francisco&what=${encodeURIComponent(searchQuery)}`;
+    const url = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=50&where=california&what=${encodeURIComponent(searchQuery)}`;
 
     const response = await fetch(url, {
       next: { revalidate: 3600 }, // Cache for 1 hour

@@ -130,8 +130,8 @@ export default function Home() {
               <p className="text-gray-text">Opportunities</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-teal">50+</p>
-              <p className="text-gray-text">Bay Area Schools</p>
+              <p className="text-4xl font-bold text-teal">100+</p>
+              <p className="text-gray-text">California Schools</p>
             </div>
             <div>
               <p className="text-4xl font-bold text-teal">30s</p>

@@ -7,7 +7,9 @@
       "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; mkdir components, lib, types; mkdir lib\\supabase, lib\\api\")",
       "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; npm install @supabase/supabase-js @supabase/auth-helpers-nextjs lucide-react date-fns\")",
       "Bash(powershell -Command \"cd ''c:\\Users\\bkdec\\Desktop\\mvpforatlaslocal\\mvpforatlas\\atlas-app''; npm install @supabase/ssr\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

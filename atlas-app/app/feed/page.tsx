@@ -165,7 +165,7 @@ export default function FeedPage() {
       <div className="px-4 py-4">
         <div className="flex items-center gap-2 text-sm text-gray-text mb-1">
           <MapPin className="w-4 h-4" />
-          <span>Bay Area</span>
+          <span>California</span>
         </div>
         <p className="text-navy font-medium">
           {filteredOpportunities.length} opportunities matched
