@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "ATLAS - Every Opportunity. One Place.",
   description:
     "Find internships, hackathons, scholarships, and more. Personalized to your school, major, and interests. Apply in 30 seconds.",
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
     title: "ATLAS - Every Opportunity. One Place.",
     description:
