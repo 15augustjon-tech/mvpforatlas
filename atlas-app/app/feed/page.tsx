@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Search, X } from "lucide-react";
+import { MapPin, Search, X, TrendingUp, SlidersHorizontal, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -28,11 +28,16 @@ export default function FeedPage() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [weeklyStats, setWeeklyStats] = useState({ applied: 0, saved: 0 });
+  const [showFilters, setShowFilters] = useState(false);
+  const [salaryFilter, setSalaryFilter] = useState("any"); // any, has-salary
+  const [dateFilter, setDateFilter] = useState("any"); // any, today, week, month
   const supabase = createClient();
 
   useEffect(() => {
     loadProfile();
     loadSavedOpportunities();
+    loadWeeklyStats();
   }, []);
 
   // Debounce search - waits 500ms after user stops typing
@@ -70,6 +75,35 @@ export default function FeedPage() {
         setSavedIds(new Set(data.map((s) => s.opportunity_id)));
       }
     }
+  };
+
+  const loadWeeklyStats = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get date 7 days ago
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoISO = weekAgo.toISOString();
+
+    // Count applications this week
+    const { count: appliedCount } = await supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("applied_at", weekAgoISO);
+
+    // Count saved this week
+    const { count: savedCount } = await supabase
+      .from("saved_opportunities")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("saved_at", weekAgoISO);
+
+    setWeeklyStats({
+      applied: appliedCount || 0,
+      saved: savedCount || 0,
+    });
   };
 
   const loadOpportunities = async () => {
@@ -148,10 +182,26 @@ export default function FeedPage() {
     setSelectedOpportunity(null);
   };
 
-  const filteredOpportunities =
-    activeFilter === "all"
-      ? opportunities
-      : opportunities.filter((o) => o.opportunity_type === activeFilter);
+  const filteredOpportunities = opportunities.filter((o) => {
+    // Category filter
+    if (activeFilter !== "all" && o.opportunity_type !== activeFilter) {
+      return false;
+    }
+    // Salary filter
+    if (salaryFilter === "has-salary" && !o.salary_min && !o.salary_max) {
+      return false;
+    }
+    // Date filter
+    if (dateFilter !== "any" && o.posted_date) {
+      const posted = new Date(o.posted_date);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24));
+      if (dateFilter === "today" && diffDays > 1) return false;
+      if (dateFilter === "week" && diffDays > 7) return false;
+      if (dateFilter === "month" && diffDays > 30) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-light pb-20">
@@ -190,18 +240,86 @@ export default function FeedPage() {
               onClick={() => setActiveFilter(filter.id)}
             />
           ))}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              showFilters || salaryFilter !== "any" || dateFilter !== "any"
+                ? "bg-teal text-white"
+                : "bg-gray-light text-gray-text"
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+            {(salaryFilter !== "any" || dateFilter !== "any") && (
+              <span className="w-2 h-2 bg-white rounded-full" />
+            )}
+          </button>
+        </div>
+
+        {/* Expanded Filters */}
+        {showFilters && (
+          <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-text mb-1 block">Salary</label>
+              <select
+                value={salaryFilter}
+                onChange={(e) => setSalaryFilter(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-gray-light rounded-lg focus:outline-none focus:ring-2 focus:ring-teal"
+              >
+                <option value="any">Any</option>
+                <option value="has-salary">Shows Salary</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-text mb-1 block">Posted</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-gray-light rounded-lg focus:outline-none focus:ring-2 focus:ring-teal"
+              >
+                <option value="any">Any Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Weekly Stats Card */}
+      <div className="px-4 py-3">
+        <div className="bg-gradient-to-r from-teal to-blue-500 rounded-card p-4 text-white">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="w-5 h-5" />
+            <span className="font-medium">Your Week</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{weeklyStats.applied}</p>
+              <p className="text-xs opacity-80">Applied</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{weeklyStats.saved}</p>
+              <p className="text-xs opacity-80">Saved</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{filteredOpportunities.length}</p>
+              <p className="text-xs opacity-80">Matches</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="px-4 py-4">
-        <div className="flex items-center gap-2 text-sm text-gray-text mb-1">
+      {/* Location Stats */}
+      <div className="px-4 pb-2">
+        <div className="flex items-center gap-2 text-sm text-gray-text">
           <MapPin className="w-4 h-4" />
           <span>California</span>
+          <span className="text-navy font-medium ml-auto">
+            {filteredOpportunities.length} opportunities
+          </span>
         </div>
-        <p className="text-navy font-medium">
-          {filteredOpportunities.length} opportunities matched
-        </p>
       </div>
 
       {/* Feed */}

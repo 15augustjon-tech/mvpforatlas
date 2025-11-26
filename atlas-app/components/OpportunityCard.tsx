@@ -1,7 +1,17 @@
 "use client";
 
-import { Bookmark, CheckCircle, MapPin, Clock } from "lucide-react";
+import { Bookmark, CheckCircle, MapPin, Clock, Users } from "lucide-react";
 import { Opportunity } from "@/types/database";
+
+// Generate consistent "students applied" count based on opportunity ID
+function getApplicantCount(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash % 45) + 5; // Returns 5-50
+}
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -89,6 +99,12 @@ export default function OpportunityCard({
             : `Up to $${opportunity.salary_max?.toLocaleString()}`}
         </p>
       )}
+
+      {/* Social Proof */}
+      <div className="flex items-center gap-2 text-sm text-gray-text mb-3">
+        <Users className="w-4 h-4" />
+        <span>{getApplicantCount(opportunity.id)} students applied</span>
+      </div>
 
       {/* Quick Apply Button */}
       <button
