@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, MapPin, GraduationCap, Briefcase } from "lucide-react";
+import { LogOut, MapPin, GraduationCap, Briefcase, X, Plus, FileText, Upload } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -14,6 +14,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<Profile>>({});
+  const [newSkill, setNewSkill] = useState("");
+  const [newInterest, setNewInterest] = useState("");
+  const [editingSkills, setEditingSkills] = useState(false);
+  const [editingInterests, setEditingInterests] = useState(false);
+  const [resumeUploading, setResumeUploading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -63,6 +68,75 @@ export default function ProfilePage() {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  };
+
+  const addSkill = async () => {
+    if (!newSkill.trim() || !profile) return;
+    const updatedSkills = [...(profile.skills || []), newSkill.trim()];
+    await supabase
+      .from("profiles")
+      .update({ skills: updatedSkills })
+      .eq("id", profile.id);
+    setProfile({ ...profile, skills: updatedSkills });
+    setNewSkill("");
+  };
+
+  const removeSkill = async (skillToRemove: string) => {
+    if (!profile) return;
+    const updatedSkills = (profile.skills || []).filter(s => s !== skillToRemove);
+    await supabase
+      .from("profiles")
+      .update({ skills: updatedSkills })
+      .eq("id", profile.id);
+    setProfile({ ...profile, skills: updatedSkills });
+  };
+
+  const addInterest = async () => {
+    if (!newInterest.trim() || !profile) return;
+    const updatedInterests = [...(profile.interests || []), newInterest.trim()];
+    await supabase
+      .from("profiles")
+      .update({ interests: updatedInterests })
+      .eq("id", profile.id);
+    setProfile({ ...profile, interests: updatedInterests });
+    setNewInterest("");
+  };
+
+  const removeInterest = async (interestToRemove: string) => {
+    if (!profile) return;
+    const updatedInterests = (profile.interests || []).filter(i => i !== interestToRemove);
+    await supabase
+      .from("profiles")
+      .update({ interests: updatedInterests })
+      .eq("id", profile.id);
+    setProfile({ ...profile, interests: updatedInterests });
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    setResumeUploading(true);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${profile.id}-resume.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("resumes")
+      .upload(fileName, file, { upsert: true });
+
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(fileName);
+
+      await supabase
+        .from("profiles")
+        .update({ resume_url: urlData.publicUrl })
+        .eq("id", profile.id);
+
+      setProfile({ ...profile, resume_url: urlData.publicUrl });
+    }
+    setResumeUploading(false);
   };
 
   const getInitials = (name: string | null) => {
@@ -203,44 +277,151 @@ export default function ProfilePage() {
 
         {/* Skills */}
         <div className="bg-white rounded-card p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Briefcase className="w-5 h-5 text-teal" />
-            <span className="font-medium text-navy">Skills</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Briefcase className="w-5 h-5 text-teal" />
+              <span className="font-medium text-navy">Skills</span>
+            </div>
+            <button
+              onClick={() => setEditingSkills(!editingSkills)}
+              className="text-teal text-sm font-medium"
+            >
+              {editingSkills ? "Done" : "Edit"}
+            </button>
           </div>
           <div className="flex flex-wrap gap-2 ml-8">
             {profile?.skills && profile.skills.length > 0 ? (
               profile.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="px-3 py-1 bg-gray-light text-gray-text rounded-full text-sm"
+                  className="px-3 py-1 bg-gray-light text-gray-text rounded-full text-sm flex items-center gap-1"
                 >
                   {skill}
+                  {editingSkills && (
+                    <button onClick={() => removeSkill(skill)} className="hover:text-red-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </span>
               ))
             ) : (
               <p className="text-gray-text">No skills added</p>
             )}
           </div>
+          {editingSkills && (
+            <div className="mt-3 ml-8 flex gap-2">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addSkill()}
+                placeholder="Add a skill..."
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
+              />
+              <button
+                onClick={addSkill}
+                className="px-3 py-2 bg-teal text-white rounded-input text-sm"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Interests */}
         <div className="bg-white rounded-card p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="w-5 h-5 text-teal text-center">★</span>
-            <span className="font-medium text-navy">Interests</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 text-teal text-center">★</span>
+              <span className="font-medium text-navy">Interests</span>
+            </div>
+            <button
+              onClick={() => setEditingInterests(!editingInterests)}
+              className="text-teal text-sm font-medium"
+            >
+              {editingInterests ? "Done" : "Edit"}
+            </button>
           </div>
           <div className="flex flex-wrap gap-2 ml-8">
             {profile?.interests && profile.interests.length > 0 ? (
               profile.interests.map((interest) => (
                 <span
                   key={interest}
-                  className="px-3 py-1 bg-teal/10 text-teal rounded-full text-sm"
+                  className="px-3 py-1 bg-teal/10 text-teal rounded-full text-sm flex items-center gap-1"
                 >
                   {interest}
+                  {editingInterests && (
+                    <button onClick={() => removeInterest(interest)} className="hover:text-red-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </span>
               ))
             ) : (
               <p className="text-gray-text">No interests added</p>
+            )}
+          </div>
+          {editingInterests && (
+            <div className="mt-3 ml-8 flex gap-2">
+              <input
+                type="text"
+                value={newInterest}
+                onChange={(e) => setNewInterest(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addInterest()}
+                placeholder="Add an interest..."
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
+              />
+              <button
+                onClick={addInterest}
+                className="px-3 py-2 bg-teal text-white rounded-input text-sm"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Resume */}
+        <div className="bg-white rounded-card p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <FileText className="w-5 h-5 text-teal" />
+            <span className="font-medium text-navy">Resume</span>
+          </div>
+          <div className="ml-8">
+            {profile?.resume_url ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href={profile.resume_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal underline text-sm"
+                >
+                  View Resume
+                </a>
+                <label className="text-gray-text text-sm cursor-pointer hover:text-teal">
+                  Replace
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-teal transition-colors">
+                <Upload className="w-5 h-5 text-gray-text" />
+                <span className="text-gray-text text-sm">
+                  {resumeUploading ? "Uploading..." : "Upload Resume (PDF, DOC)"}
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResumeUpload}
+                  className="hidden"
+                  disabled={resumeUploading}
+                />
+              </label>
             )}
           </div>
         </div>
