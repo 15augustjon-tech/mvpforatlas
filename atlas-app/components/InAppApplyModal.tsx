@@ -15,6 +15,7 @@ import {
   DollarSign,
   FileText,
   Send,
+  Pencil,
 } from "lucide-react";
 import { Opportunity, Profile } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
@@ -43,8 +44,8 @@ const APPLICATION_QUESTIONS = [
   { id: "why_role", label: "Why are you interested in this role?", aiPrompt: "why_role" },
   { id: "strengths", label: "What are your greatest strengths?", aiPrompt: "strengths" },
   { id: "experience", label: "Describe a relevant project or experience", aiPrompt: "experience" },
-  { id: "availability", label: "When are you available to start?", aiPrompt: null },
-  { id: "work_auth", label: "Are you authorized to work in the US?", aiPrompt: null, type: "select", options: ["Yes", "No", "Require Sponsorship"] },
+  { id: "availability", label: "When are you available to start?", aiPrompt: "availability", defaultValue: "Immediately" },
+  { id: "work_auth", label: "Are you authorized to work in the US?", aiPrompt: null, type: "select", options: ["Yes", "No", "Require Sponsorship"], defaultValue: "Yes" },
 ];
 
 export default function InAppApplyModal({
@@ -61,6 +62,8 @@ export default function InAppApplyModal({
   const [generatingAll, setGeneratingAll] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showDescription, setShowDescription] = useState(false);
+  const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
+  const [autoFillDone, setAutoFillDone] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -71,10 +74,32 @@ export default function InAppApplyModal({
         const value = profile[field.profileKey as keyof Profile];
         if (value) initial[field.id] = String(value);
       });
+      // Add default values for select fields
+      APPLICATION_QUESTIONS.forEach((q) => {
+        if (q.defaultValue) initial[q.id] = q.defaultValue;
+      });
       setFormData(initial);
+
+      // Auto-fill AI answers on load
+      if (!autoFillDone) {
+        setTimeout(() => generateAllAIAnswers(), 500);
+        setAutoFillDone(true);
+      }
     }
     loadSavedAnswers();
   }, [profile]);
+
+  const toggleExpand = (fieldId: string) => {
+    setExpandedFields(prev => {
+      const next = new Set(prev);
+      if (next.has(fieldId)) {
+        next.delete(fieldId);
+      } else {
+        next.add(fieldId);
+      }
+      return next;
+    });
+  };
 
   const loadSavedAnswers = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -365,95 +390,116 @@ export default function InAppApplyModal({
                 <h3 className="font-semibold text-navy flex items-center gap-2">
                   <span className="w-6 h-6 bg-teal text-white rounded-full flex items-center justify-center text-sm">2</span>
                   Application Questions
-                </h3>
-                <button
-                  onClick={generateAllAIAnswers}
-                  disabled={generatingAll || !profile}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all"
-                >
-                  {generatingAll ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Filling...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Fill All with AI
-                    </>
+                  {generatingAll && (
+                    <span className="flex items-center gap-1 text-xs text-purple-500 font-normal">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Auto-filling...
+                    </span>
                   )}
-                </button>
+                </h3>
               </div>
-              <div className="space-y-4">
-                {APPLICATION_QUESTIONS.map((question) => (
-                  <div key={question.id} className="bg-gray-light rounded-xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <label className="text-sm font-medium text-navy flex-1 pr-2">
-                        {question.label}
-                      </label>
-                      <div className="flex gap-1">
-                        {formData[question.id] && (
-                          <button
-                            onClick={() => copyToClipboard(formData[question.id], question.id)}
-                            className="p-1.5 hover:bg-gray-200 rounded-full"
-                            title="Copy answer"
-                          >
-                            {copiedField === question.id ? (
-                              <Check className="w-4 h-4 text-green-600" />
+              <div className="space-y-3">
+                {APPLICATION_QUESTIONS.map((question) => {
+                  const isExpanded = expandedFields.has(question.id);
+                  const hasValue = !!formData[question.id];
+                  const isGenerating = generatingAI === question.id;
+
+                  return (
+                    <div key={question.id} className="bg-gray-light rounded-xl overflow-hidden">
+                      {/* Compact View */}
+                      <div
+                        className="p-3 cursor-pointer hover:bg-gray-200/50 transition-colors"
+                        onClick={() => toggleExpand(question.id)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-text mb-1">{question.label}</p>
+                            {isGenerating ? (
+                              <div className="flex items-center gap-2 text-purple-500">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span className="text-sm">Generating...</span>
+                              </div>
+                            ) : hasValue ? (
+                              <p className="text-sm text-navy line-clamp-2">{formData[question.id]}</p>
                             ) : (
-                              <Copy className="w-4 h-4 text-gray-400" />
+                              <p className="text-sm text-gray-400 italic">Not filled yet</p>
                             )}
-                          </button>
-                        )}
-                        {question.aiPrompt && (
-                          <button
-                            onClick={() => generateAIAnswer(question.id, question.aiPrompt!)}
-                            disabled={generatingAI === question.id}
-                            className="flex items-center gap-1 px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 disabled:opacity-50"
-                            title="Generate with AI"
-                          >
-                            {generatingAI === question.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-3 h-3" />
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {hasValue && (
+                              <Check className="w-4 h-4 text-green-500" />
                             )}
-                            AI
-                          </button>
-                        )}
+                            <Pencil className="w-4 h-4 text-gray-400" />
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Expanded Edit View */}
+                      {isExpanded && (
+                        <div className="px-3 pb-3 border-t border-gray-200">
+                          <div className="flex gap-1 mt-2 mb-2">
+                            {hasValue && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(formData[question.id], question.id);
+                                }}
+                                className="p-1.5 hover:bg-gray-200 rounded-full"
+                                title="Copy"
+                              >
+                                {copiedField === question.id ? (
+                                  <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-gray-400" />
+                                )}
+                              </button>
+                            )}
+                            {question.aiPrompt && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  generateAIAnswer(question.id, question.aiPrompt!);
+                                }}
+                                disabled={isGenerating}
+                                className="flex items-center gap-1 px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 disabled:opacity-50"
+                              >
+                                {isGenerating ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-3 h-3" />
+                                )}
+                                Regenerate
+                              </button>
+                            )}
+                          </div>
+
+                          {question.type === "select" ? (
+                            <select
+                              value={formData[question.id] || ""}
+                              onChange={(e) => handleChange(question.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full px-3 py-2.5 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+                            >
+                              <option value="">Select...</option>
+                              {question.options?.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <textarea
+                              value={formData[question.id] || ""}
+                              onChange={(e) => handleChange(question.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              placeholder="Write your answer..."
+                              rows={3}
+                              className="w-full px-3 py-2.5 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal resize-none"
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
-
-                    {question.type === "select" ? (
-                      <select
-                        value={formData[question.id] || ""}
-                        onChange={(e) => handleChange(question.id, e.target.value)}
-                        className="w-full px-3 py-2.5 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal"
-                      >
-                        <option value="">Select...</option>
-                        {question.options?.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <textarea
-                        value={formData[question.id] || ""}
-                        onChange={(e) => handleChange(question.id, e.target.value)}
-                        placeholder={savedAnswers[question.id] ? "Using your saved answer..." : "Write your answer..."}
-                        rows={3}
-                        className="w-full px-3 py-2.5 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal resize-none"
-                      />
-                    )}
-
-                    {savedAnswers[question.id] && !formData[question.id] && (
-                      <button
-                        onClick={() => handleChange(question.id, savedAnswers[question.id])}
-                        className="mt-2 text-xs text-teal hover:underline"
-                      >
-                        Use saved answer from Application Prep
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
