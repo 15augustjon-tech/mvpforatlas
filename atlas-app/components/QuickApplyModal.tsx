@@ -22,29 +22,28 @@ export default function QuickApplyModal({
 
   const handleAutoApply = async () => {
     setIsAutoApplying(true);
-    setAutoApplyStatus("Starting auto-fill...");
+    setAutoApplyStatus("AI is analyzing the application...");
 
     try {
-      const response = await fetch("/api/apply", {
+      const response = await fetch("/api/auto-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobUrl: opportunity.url,
-          opportunityId: opportunity.id,
-          opportunityTitle: opportunity.title,
-          companyName: opportunity.company,
+          jobTitle: opportunity.title,
+          company: opportunity.company,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setAutoApplyStatus("Form pre-filled! Opening application...");
+        setAutoApplyStatus(`Filled ${result.fieldsFilledCount || 0} fields with AI! ${result.requiresResumeUpload ? "Resume upload needed." : ""}`);
         setTimeout(() => {
           window.open(opportunity.url, "_blank");
           onApply();
           onClose();
-        }, 1500);
+        }, 2000);
       } else {
         setAutoApplyStatus(result.message || "Could not auto-fill. Opening manually...");
         setTimeout(() => {
@@ -195,7 +194,7 @@ export default function QuickApplyModal({
           </button>
 
           <p className="text-center text-xs text-gray-text mt-2">
-            Steel AI will pre-fill the application form for you
+            ATLAS AI will pre-fill the application form for you
           </p>
 
           {/* Manual Apply Button */}

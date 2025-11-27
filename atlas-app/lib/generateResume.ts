@@ -7,279 +7,250 @@ export function generateResume(profile: Profile): jsPDF {
     format: "letter",
   });
 
-  // Page setup
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 40;
+  // Page setup - wider margins for breathing room
+  const pageWidth = doc.internal.pageSize.getWidth(); // 612pt
+  const pageHeight = doc.internal.pageSize.getHeight(); // 792pt
+  const margin = 54; // 0.75 inch margins
   const contentWidth = pageWidth - margin * 2;
-  let y = 40;
+  let y = 54;
 
-  // Font sizes (matching Jake's Resume template)
-  const nameSize = 18;
-  const contactSize = 10;
-  const sectionTitleSize = 11;
-  const entryTitleSize = 10;
+  // Font sizes - slightly larger for readability
+  const nameSize = 16;
+  const sectionTitleSize = 10;
   const bodySize = 10;
+  const smallSize = 9;
 
-  // Colors - pure black for ATS compatibility
-  const black: [number, number, number] = [0, 0, 0];
+  // Line heights - more generous spacing
+  const lineHeight = 13;
+  const sectionGap = 16;
+  const entryGap = 10;
 
   // Helper function to check page break
   const checkPageBreak = (neededHeight: number) => {
-    if (y + neededHeight > doc.internal.pageSize.getHeight() - 40) {
+    if (y + neededHeight > pageHeight - 54) {
       doc.addPage();
-      y = 40;
+      y = 54;
     }
   };
 
-  // ============================================
-  // HEADER - Name (centered, bold, uppercase)
-  // ============================================
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(nameSize);
-  doc.setTextColor(black[0], black[1], black[2]);
-  doc.text(profile.full_name?.toUpperCase() || "YOUR NAME", pageWidth / 2, y, { align: "center" });
-  y += 16;
+  // Helper to draw section header with underline
+  const drawSectionHeader = (title: string) => {
+    checkPageBreak(30);
+    doc.setFont("times", "bold");
+    doc.setFontSize(sectionTitleSize);
+    doc.text(title, margin, y);
+    y += 3;
+    doc.setLineWidth(0.75);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += lineHeight;
+  };
 
   // ============================================
-  // CONTACT INFO LINE (centered, separated by |)
+  // HEADER - Name (centered, bold)
   // ============================================
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(contactSize);
+  doc.setFont("times", "bold");
+  doc.setFontSize(nameSize);
+  doc.setTextColor(0, 0, 0);
+  doc.text(profile.full_name?.toUpperCase() || "YOUR NAME", pageWidth / 2, y, { align: "center" });
+  y += 18;
+
+  // ============================================
+  // CONTACT INFO LINE
+  // ============================================
+  doc.setFont("times", "normal");
+  doc.setFontSize(smallSize);
 
   const contactItems: string[] = [];
   if (profile.phone) contactItems.push(profile.phone);
   if (profile.email) contactItems.push(profile.email);
   if (profile.linkedin_url) {
-    const linkedin = profile.linkedin_url.replace("https://", "").replace("http://", "");
+    const linkedin = profile.linkedin_url.replace("https://", "").replace("http://", "").replace("www.", "");
     contactItems.push(linkedin);
   }
   if (profile.github_url) {
-    const github = profile.github_url.replace("https://", "").replace("http://", "");
+    const github = profile.github_url.replace("https://", "").replace("http://", "").replace("www.", "");
     contactItems.push(github);
-  }
-  if (profile.portfolio_url) {
-    const portfolio = profile.portfolio_url.replace("https://", "").replace("http://", "");
-    contactItems.push(portfolio);
   }
 
   if (contactItems.length > 0) {
-    const contactLine = contactItems.join(" | ");
+    const contactLine = contactItems.join("  |  ");
     doc.text(contactLine, pageWidth / 2, y, { align: "center" });
   }
-  y += 14;
-
-  // Horizontal line under header
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
+  y += sectionGap + 4;
 
   // ============================================
   // EDUCATION SECTION
   // ============================================
   if (profile.university) {
-    // Section header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(sectionTitleSize);
-    doc.text("EDUCATION", margin, y);
-    y += 2;
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
+    drawSectionHeader("EDUCATION");
 
-    // University row
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(entryTitleSize);
+    // University and location on same line
+    doc.setFont("times", "bold");
+    doc.setFontSize(bodySize);
     doc.text(profile.university, margin, y);
 
-    // Location (right aligned)
     if (profile.city && profile.state) {
-      doc.setFont("helvetica", "normal");
+      doc.setFont("times", "normal");
       doc.text(`${profile.city}, ${profile.state}`, pageWidth - margin, y, { align: "right" });
     }
-    y += 12;
+    y += lineHeight;
 
-    // Degree row
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(entryTitleSize);
-
+    // Degree and graduation date
+    doc.setFont("times", "italic");
     let degreeText = "";
     if (profile.degree_type && profile.major) {
-      degreeText = `${profile.degree_type} in ${profile.major}`;
+      degreeText = `${profile.degree_type}, ${profile.major}`;
     } else if (profile.major) {
-      degreeText = `Bachelor's in ${profile.major}`;
+      degreeText = `Bachelor of Science, ${profile.major}`;
     }
     if (profile.minor) {
       degreeText += `, Minor in ${profile.minor}`;
     }
-
     doc.text(degreeText, margin, y);
 
-    // Graduation date (right aligned)
+    // Graduation date
+    doc.setFont("times", "normal");
     if (profile.graduation_month && profile.graduation_year) {
-      doc.setFont("helvetica", "normal");
       doc.text(`${profile.graduation_month} ${profile.graduation_year}`, pageWidth - margin, y, { align: "right" });
     } else if (profile.graduation_year) {
-      doc.setFont("helvetica", "normal");
       doc.text(`Expected ${profile.graduation_year}`, pageWidth - margin, y, { align: "right" });
     }
-    y += 12;
+    y += lineHeight;
 
-    // GPA row
+    // GPA on its own line
     if (profile.gpa) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(entryTitleSize);
+      doc.setFont("times", "normal");
       doc.text(`GPA: ${profile.gpa}/4.0`, margin, y);
-      y += 12;
+      y += lineHeight;
     }
 
     // Relevant Coursework
     if (profile.relevant_coursework && profile.relevant_coursework.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(entryTitleSize);
-      const courseworkLabel = "Relevant Coursework: ";
-      doc.text(courseworkLabel, margin, y);
+      doc.setFont("times", "bold");
+      const label = "Relevant Coursework: ";
+      doc.text(label, margin, y);
+      const labelWidth = doc.getTextWidth(label);
 
-      doc.setFont("helvetica", "normal");
+      doc.setFont("times", "normal");
       const courseworkText = profile.relevant_coursework.join(", ");
-      const labelWidth = doc.getTextWidth(courseworkLabel);
-      const courseworkLines = doc.splitTextToSize(courseworkText, contentWidth - labelWidth);
-      doc.text(courseworkLines[0], margin + labelWidth, y);
-      if (courseworkLines.length > 1) {
-        y += 12;
-        for (let i = 1; i < courseworkLines.length; i++) {
-          doc.text(courseworkLines[i], margin, y);
-          y += 12;
-        }
-      } else {
-        y += 12;
+      const lines = doc.splitTextToSize(courseworkText, contentWidth - labelWidth);
+      doc.text(lines[0], margin + labelWidth, y);
+      y += lineHeight;
+
+      for (let i = 1; i < lines.length; i++) {
+        doc.text(lines[i], margin, y);
+        y += lineHeight;
       }
     }
 
-    y += 8;
+    y += sectionGap;
   }
 
   // ============================================
   // EXPERIENCE SECTION
   // ============================================
   if (profile.experiences && profile.experiences.length > 0) {
-    checkPageBreak(60);
+    drawSectionHeader("EXPERIENCE");
 
-    // Section header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(sectionTitleSize);
-    doc.text("EXPERIENCE", margin, y);
-    y += 2;
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
+    for (let i = 0; i < profile.experiences.length; i++) {
+      const exp = profile.experiences[i];
+      checkPageBreak(60);
 
-    for (const exp of profile.experiences) {
-      checkPageBreak(50);
+      // Job title and date
+      doc.setFont("times", "bold");
+      doc.setFontSize(bodySize);
+      doc.text(exp.title || "Position Title", margin, y);
 
-      // Title row with date
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(entryTitleSize);
-      doc.text(exp.title || "Position", margin, y);
-
-      // Date (right aligned)
-      doc.setFont("helvetica", "normal");
+      doc.setFont("times", "normal");
       const dateText = exp.current
-        ? `${exp.startDate} – Present`
-        : `${exp.startDate} – ${exp.endDate}`;
+        ? `${exp.startDate} - Present`
+        : `${exp.startDate} - ${exp.endDate}`;
       doc.text(dateText, pageWidth - margin, y, { align: "right" });
-      y += 12;
+      y += lineHeight;
 
-      // Company and location (italic)
-      doc.setFont("helvetica", "italic");
-      const companyLocation = exp.location
-        ? `${exp.company}, ${exp.location}`
-        : exp.company;
-      doc.text(companyLocation, margin, y);
-      y += 12;
+      // Company and location
+      doc.setFont("times", "italic");
+      const companyLine = exp.location ? `${exp.company}, ${exp.location}` : exp.company;
+      doc.text(companyLine, margin, y);
+      y += lineHeight + 2;
 
       // Bullet points
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(bodySize);
-      const bulletIndent = 10;
-
+      doc.setFont("times", "normal");
       for (const bullet of exp.bullets) {
         if (!bullet.trim()) continue;
-        checkPageBreak(20);
+        checkPageBreak(lineHeight * 2);
 
-        const bulletText = `• ${bullet}`;
-        const lines = doc.splitTextToSize(bulletText, contentWidth - bulletIndent);
-        for (let i = 0; i < lines.length; i++) {
-          doc.text(lines[i], margin + (i === 0 ? 0 : bulletIndent), y);
-          y += 12;
+        const bulletText = bullet;
+        const lines = doc.splitTextToSize(bulletText, contentWidth - 12);
+
+        // Draw bullet
+        doc.text("•", margin, y);
+
+        for (let j = 0; j < lines.length; j++) {
+          doc.text(lines[j], margin + 12, y);
+          y += lineHeight;
         }
       }
 
-      y += 6;
+      // Add space between experiences (but not after the last one)
+      if (i < profile.experiences.length - 1) {
+        y += entryGap;
+      }
     }
 
-    y += 4;
+    y += sectionGap;
   }
 
   // ============================================
   // PROJECTS SECTION
   // ============================================
   if (profile.projects && profile.projects.length > 0) {
-    checkPageBreak(60);
+    drawSectionHeader("PROJECTS");
 
-    // Section header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(sectionTitleSize);
-    doc.text("PROJECTS", margin, y);
-    y += 2;
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
-
-    for (const proj of profile.projects) {
+    for (let i = 0; i < profile.projects.length; i++) {
+      const proj = profile.projects[i];
       checkPageBreak(50);
 
-      // Project name with date
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(entryTitleSize);
-      doc.text(proj.name || "Project", margin, y);
+      // Project name and date
+      doc.setFont("times", "bold");
+      doc.setFontSize(bodySize);
+      doc.text(proj.name || "Project Name", margin, y);
 
-      // Date (right aligned)
       if (proj.date) {
-        doc.setFont("helvetica", "normal");
+        doc.setFont("times", "normal");
         doc.text(proj.date, pageWidth - margin, y, { align: "right" });
       }
-      y += 12;
+      y += lineHeight;
 
-      // Technologies (italic)
+      // Technologies
       if (proj.technologies && proj.technologies.length > 0) {
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(entryTitleSize);
+        doc.setFont("times", "italic");
         doc.text(proj.technologies.join(", "), margin, y);
-        y += 12;
+        y += lineHeight + 2;
       }
 
       // Bullet points
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(bodySize);
-      const bulletIndent = 10;
-
+      doc.setFont("times", "normal");
       for (const bullet of proj.bullets) {
         if (!bullet.trim()) continue;
-        checkPageBreak(20);
+        checkPageBreak(lineHeight * 2);
 
-        const bulletText = `• ${bullet}`;
-        const lines = doc.splitTextToSize(bulletText, contentWidth - bulletIndent);
-        for (let i = 0; i < lines.length; i++) {
-          doc.text(lines[i], margin + (i === 0 ? 0 : bulletIndent), y);
-          y += 12;
+        const lines = doc.splitTextToSize(bullet, contentWidth - 12);
+        doc.text("•", margin, y);
+
+        for (let j = 0; j < lines.length; j++) {
+          doc.text(lines[j], margin + 12, y);
+          y += lineHeight;
         }
       }
 
-      y += 6;
+      if (i < profile.projects.length - 1) {
+        y += entryGap;
+      }
     }
 
-    y += 4;
+    y += sectionGap;
   }
 
   // ============================================
@@ -292,68 +263,68 @@ export function generateResume(profile: Profile): jsPDF {
     (profile.skills && profile.skills.length > 0);
 
   if (hasSkills) {
-    checkPageBreak(50);
+    drawSectionHeader("SKILLS");
 
-    // Section header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(sectionTitleSize);
-    doc.text("TECHNICAL SKILLS", margin, y);
-    y += 2;
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
-
-    doc.setFontSize(entryTitleSize);
+    doc.setFontSize(bodySize);
 
     // Languages
     if (profile.languages && profile.languages.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Languages: ", margin, y);
-      const langLabelWidth = doc.getTextWidth("Languages: ");
-      doc.setFont("helvetica", "normal");
-      const langText = profile.languages.join(", ");
-      const langLines = doc.splitTextToSize(langText, contentWidth - langLabelWidth);
-      doc.text(langLines[0], margin + langLabelWidth, y);
-      y += 12;
-      for (let i = 1; i < langLines.length; i++) {
-        doc.text(langLines[i], margin, y);
-        y += 12;
+      doc.setFont("times", "bold");
+      const label = "Languages: ";
+      doc.text(label, margin, y);
+      const labelWidth = doc.getTextWidth(label);
+
+      doc.setFont("times", "normal");
+      const text = profile.languages.join(", ");
+      const lines = doc.splitTextToSize(text, contentWidth - labelWidth);
+      doc.text(lines[0], margin + labelWidth, y);
+      y += lineHeight;
+
+      for (let i = 1; i < lines.length; i++) {
+        doc.text(lines[i], margin, y);
+        y += lineHeight;
       }
     }
 
     // Frameworks
     if (profile.frameworks && profile.frameworks.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Frameworks: ", margin, y);
-      const fwLabelWidth = doc.getTextWidth("Frameworks: ");
-      doc.setFont("helvetica", "normal");
-      const fwText = profile.frameworks.join(", ");
-      const fwLines = doc.splitTextToSize(fwText, contentWidth - fwLabelWidth);
-      doc.text(fwLines[0], margin + fwLabelWidth, y);
-      y += 12;
-      for (let i = 1; i < fwLines.length; i++) {
-        doc.text(fwLines[i], margin, y);
-        y += 12;
+      doc.setFont("times", "bold");
+      const label = "Frameworks: ";
+      doc.text(label, margin, y);
+      const labelWidth = doc.getTextWidth(label);
+
+      doc.setFont("times", "normal");
+      const text = profile.frameworks.join(", ");
+      const lines = doc.splitTextToSize(text, contentWidth - labelWidth);
+      doc.text(lines[0], margin + labelWidth, y);
+      y += lineHeight;
+
+      for (let i = 1; i < lines.length; i++) {
+        doc.text(lines[i], margin, y);
+        y += lineHeight;
       }
     }
 
     // Tools
     if (profile.tools && profile.tools.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Tools: ", margin, y);
-      const toolLabelWidth = doc.getTextWidth("Tools: ");
-      doc.setFont("helvetica", "normal");
-      const toolText = profile.tools.join(", ");
-      const toolLines = doc.splitTextToSize(toolText, contentWidth - toolLabelWidth);
-      doc.text(toolLines[0], margin + toolLabelWidth, y);
-      y += 12;
-      for (let i = 1; i < toolLines.length; i++) {
-        doc.text(toolLines[i], margin, y);
-        y += 12;
+      doc.setFont("times", "bold");
+      const label = "Developer Tools: ";
+      doc.text(label, margin, y);
+      const labelWidth = doc.getTextWidth(label);
+
+      doc.setFont("times", "normal");
+      const text = profile.tools.join(", ");
+      const lines = doc.splitTextToSize(text, contentWidth - labelWidth);
+      doc.text(lines[0], margin + labelWidth, y);
+      y += lineHeight;
+
+      for (let i = 1; i < lines.length; i++) {
+        doc.text(lines[i], margin, y);
+        y += lineHeight;
       }
     }
 
-    // Fallback to general skills array if no categorized skills
+    // Fallback to general skills
     if (
       (!profile.languages || profile.languages.length === 0) &&
       (!profile.frameworks || profile.frameworks.length === 0) &&
@@ -361,41 +332,12 @@ export function generateResume(profile: Profile): jsPDF {
       profile.skills &&
       profile.skills.length > 0
     ) {
-      doc.setFont("helvetica", "normal");
-      const skillsText = profile.skills.join(", ");
-      const skillLines = doc.splitTextToSize(skillsText, contentWidth);
-      for (const line of skillLines) {
+      doc.setFont("times", "normal");
+      const text = profile.skills.join(", ");
+      const lines = doc.splitTextToSize(text, contentWidth);
+      for (const line of lines) {
         doc.text(line, margin, y);
-        y += 12;
-      }
-    }
-
-    y += 8;
-  }
-
-  // ============================================
-  // INTERESTS (optional, if space allows)
-  // ============================================
-  if (profile.interests && profile.interests.length > 0) {
-    checkPageBreak(40);
-
-    // Only add if we have room
-    if (y < doc.internal.pageSize.getHeight() - 60) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(sectionTitleSize);
-      doc.text("INTERESTS", margin, y);
-      y += 2;
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 12;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(entryTitleSize);
-      const interestsText = profile.interests.join(", ");
-      const interestLines = doc.splitTextToSize(interestsText, contentWidth);
-      for (const line of interestLines) {
-        doc.text(line, margin, y);
-        y += 12;
+        y += lineHeight;
       }
     }
   }

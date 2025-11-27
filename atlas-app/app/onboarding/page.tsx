@@ -32,6 +32,7 @@ const degreeTypes = [
   "Master of Science (M.S.)",
   "Master of Arts (M.A.)",
   "Ph.D.",
+  "Other",
 ];
 
 const months = [
@@ -501,8 +502,14 @@ export default function OnboardingPage() {
                   University *
                 </label>
                 <select
-                  value={formData.university}
-                  onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+                  value={universities.includes(formData.university) ? formData.university : (formData.university ? "Other" : "")}
+                  onChange={(e) => {
+                    if (e.target.value === "Other") {
+                      setFormData({ ...formData, university: "" });
+                    } else {
+                      setFormData({ ...formData, university: e.target.value });
+                    }
+                  }}
                   className="w-full px-4 py-3 border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
                 >
                   <option value="">Select university</option>
@@ -510,6 +517,15 @@ export default function OnboardingPage() {
                     <option key={uni} value={uni}>{uni}</option>
                   ))}
                 </select>
+                {(!universities.includes(formData.university) || formData.university === "") && (
+                  <input
+                    type="text"
+                    value={universities.includes(formData.university) ? "" : formData.university}
+                    onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+                    className="w-full mt-2 px-4 py-3 border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
+                    placeholder="Type your university name"
+                  />
+                )}
               </div>
 
               <div>
@@ -517,8 +533,14 @@ export default function OnboardingPage() {
                   Degree Type
                 </label>
                 <select
-                  value={formData.degree_type}
-                  onChange={(e) => setFormData({ ...formData, degree_type: e.target.value })}
+                  value={degreeTypes.includes(formData.degree_type) ? formData.degree_type : (formData.degree_type ? "Other" : "")}
+                  onChange={(e) => {
+                    if (e.target.value === "Other") {
+                      setFormData({ ...formData, degree_type: "" });
+                    } else {
+                      setFormData({ ...formData, degree_type: e.target.value });
+                    }
+                  }}
                   className="w-full px-4 py-3 border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
                 >
                   <option value="">Select degree</option>
@@ -526,6 +548,15 @@ export default function OnboardingPage() {
                     <option key={deg} value={deg}>{deg}</option>
                   ))}
                 </select>
+                {(!degreeTypes.includes(formData.degree_type) || formData.degree_type === "") && (
+                  <input
+                    type="text"
+                    value={degreeTypes.includes(formData.degree_type) ? "" : formData.degree_type}
+                    onChange={(e) => setFormData({ ...formData, degree_type: e.target.value })}
+                    className="w-full mt-2 px-4 py-3 border border-gray-200 rounded-input focus:outline-none focus:ring-2 focus:ring-teal"
+                    placeholder="Type your degree type"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
