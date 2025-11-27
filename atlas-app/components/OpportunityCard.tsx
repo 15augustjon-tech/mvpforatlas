@@ -1,17 +1,15 @@
 "use client";
 
-import { Bookmark, CheckCircle, MapPin, Clock, Users } from "lucide-react";
+import { Bookmark, CheckCircle, MapPin, Clock, Globe } from "lucide-react";
 import { Opportunity } from "@/types/database";
 
-// Generate consistent "students applied" count based on opportunity ID
-function getApplicantCount(id: string): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 45) + 5; // Returns 5-50
-}
+// Map source IDs to display names
+const sourceNames: Record<string, string> = {
+  adzuna: "Adzuna",
+  arbeitnow: "Arbeitnow",
+  remoteok: "RemoteOK",
+  remotive: "Remotive",
+};
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -100,11 +98,13 @@ export default function OpportunityCard({
         </p>
       )}
 
-      {/* Social Proof */}
-      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-text mb-2.5 sm:mb-3">
-        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span>{getApplicantCount(opportunity.id)} students applied</span>
-      </div>
+      {/* Source */}
+      {opportunity.source && (
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-text mb-2.5 sm:mb-3">
+          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>via {sourceNames[opportunity.source] || opportunity.source}</span>
+        </div>
+      )}
 
       {/* Quick Apply Button */}
       <button
