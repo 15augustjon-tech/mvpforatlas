@@ -58,6 +58,7 @@ export default function InAppApplyModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [generatingAI, setGeneratingAI] = useState<string | null>(null);
+  const [generatingAll, setGeneratingAll] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showDescription, setShowDescription] = useState(false);
   const supabase = createClient();
@@ -130,6 +131,46 @@ export default function InAppApplyModal({
     }
 
     setGeneratingAI(null);
+  };
+
+  const generateAllAIAnswers = async () => {
+    if (!profile) return;
+    setGeneratingAll(true);
+
+    const questionsWithAI = APPLICATION_QUESTIONS.filter(q => q.aiPrompt);
+
+    for (const question of questionsWithAI) {
+      setGeneratingAI(question.id);
+      try {
+        const response = await fetch("/api/ai-autofill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            formFields: [{
+              id: question.id,
+              name: question.id,
+              type: "textarea",
+              label: question.aiPrompt
+            }],
+            jobDescription: `${opportunity.title} at ${opportunity.company}. ${opportunity.description || ""}`,
+            userProfile: profile,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success && data.filledData) {
+          const answer = data.filledData[question.id] || data.filledData[Object.keys(data.filledData)[0]];
+          if (answer) {
+            setFormData(prev => ({ ...prev, [question.id]: answer }));
+          }
+        }
+      } catch (error) {
+        console.error(`AI generation error for ${question.id}:`, error);
+      }
+    }
+
+    setGeneratingAI(null);
+    setGeneratingAll(false);
   };
 
   const copyToClipboard = async (text: string, fieldId: string) => {
@@ -320,10 +361,29 @@ export default function InAppApplyModal({
 
             {/* Application Questions Section */}
             <div>
-              <h3 className="font-semibold text-navy mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 bg-teal text-white rounded-full flex items-center justify-center text-sm">2</span>
-                Application Questions
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-navy flex items-center gap-2">
+                  <span className="w-6 h-6 bg-teal text-white rounded-full flex items-center justify-center text-sm">2</span>
+                  Application Questions
+                </h3>
+                <button
+                  onClick={generateAllAIAnswers}
+                  disabled={generatingAll || !profile}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all"
+                >
+                  {generatingAll ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Filling...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Fill All with AI
+                    </>
+                  )}
+                </button>
+              </div>
               <div className="space-y-4">
                 {APPLICATION_QUESTIONS.map((question) => (
                   <div key={question.id} className="bg-gray-light rounded-xl p-4">
