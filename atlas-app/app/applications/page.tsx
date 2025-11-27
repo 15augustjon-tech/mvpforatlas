@@ -25,6 +25,7 @@ export default function ApplicationsPage() {
 
   useEffect(() => {
     loadApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadApplications = async () => {

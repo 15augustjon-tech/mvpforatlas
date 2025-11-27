@@ -1471,6 +1471,18 @@ export async function GET(request: Request) {
     opportunities = opportunities.filter((o) => o.opportunity_type === "job");
   }
 
+  // Filter by search query
+  if (userSearch) {
+    const searchLower = userSearch.toLowerCase();
+    opportunities = opportunities.filter(
+      (o) =>
+        o.title.toLowerCase().includes(searchLower) ||
+        o.company.toLowerCase().includes(searchLower) ||
+        o.tags.some((tag) => tag.toLowerCase().includes(searchLower)) ||
+        o.location.toLowerCase().includes(searchLower)
+    );
+  }
+
   // Recalculate match scores based on user skills
   opportunities = opportunities.map((o) => ({
     ...o,

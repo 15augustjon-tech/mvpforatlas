@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { MapPin, Search, X, TrendingUp, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Search, X, TrendingUp, SlidersHorizontal } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -38,6 +38,7 @@ export default function FeedPage() {
     loadProfile();
     loadSavedOpportunities();
     loadWeeklyStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Debounce search - waits 500ms after user stops typing
@@ -50,6 +51,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     loadOpportunities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, profile, debouncedSearch]);
 
   const loadProfile = async () => {
