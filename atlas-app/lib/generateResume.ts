@@ -2,144 +2,205 @@ import { jsPDF } from "jspdf";
 import { Profile } from "@/types/database";
 
 export function generateResume(profile: Profile): jsPDF {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    unit: "pt",
+    format: "letter",
+  });
 
-  // Colors
-  const teal = [20, 184, 166];
-  const navy = [30, 41, 59];
-  const gray = [100, 116, 139];
+  // Page setup
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 50;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 50;
 
-  let y = 20; // Current Y position
+  // Colors - professional dark gray, not black
+  const black = [33, 33, 33];
+  const darkGray = [68, 68, 68];
+  const mediumGray = [102, 102, 102];
 
-  // Header - Name
-  doc.setFontSize(28);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
+  // ============================================
+  // HEADER - Name
+  // ============================================
   doc.setFont("helvetica", "bold");
-  doc.text(profile.full_name || "Your Name", 20, y);
-  y += 10;
+  doc.setFontSize(24);
+  doc.setTextColor(black[0], black[1], black[2]);
+  doc.text(profile.full_name?.toUpperCase() || "YOUR NAME", pageWidth / 2, y, { align: "center" });
+  y += 25;
 
-  // Contact info line
-  doc.setFontSize(10);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
+  // ============================================
+  // CONTACT INFO LINE
+  // ============================================
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-  const contactParts = [];
-  if (profile.email) contactParts.push(profile.email);
-  if (profile.location) contactParts.push(profile.location);
+  const contactItems = [];
+  if (profile.email) contactItems.push(profile.email);
+  if (profile.location) contactItems.push(profile.location);
 
-  doc.text(contactParts.join("  |  "), 20, y);
-  y += 15;
+  const contactLine = contactItems.join("  •  ");
+  doc.text(contactLine, pageWidth / 2, y, { align: "center" });
+  y += 30;
 
-  // Divider line
-  doc.setDrawColor(teal[0], teal[1], teal[2]);
+  // ============================================
+  // HORIZONTAL LINE
+  // ============================================
+  doc.setDrawColor(180, 180, 180);
   doc.setLineWidth(0.5);
-  doc.line(20, y, 190, y);
-  y += 10;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 25;
 
-  // Education Section
-  doc.setFontSize(14);
-  doc.setTextColor(teal[0], teal[1], teal[2]);
+  // ============================================
+  // EDUCATION SECTION
+  // ============================================
+  // Section header
   doc.setFont("helvetica", "bold");
-  doc.text("EDUCATION", 20, y);
-  y += 8;
+  doc.setFontSize(11);
+  doc.setTextColor(black[0], black[1], black[2]);
+  doc.text("EDUCATION", margin, y);
+  y += 18;
 
-  doc.setFontSize(12);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
+  // University name and date on same line
   doc.setFont("helvetica", "bold");
-  doc.text(profile.university || "University", 20, y);
+  doc.setFontSize(11);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text(profile.university || "University Name", margin, y);
 
-  // Graduation year on the right
+  // Graduation date aligned right
   if (profile.graduation_year) {
     doc.setFont("helvetica", "normal");
-    doc.text(`Class of ${profile.graduation_year}`, 190, y, { align: "right" });
+    doc.text(`Expected ${profile.graduation_year}`, pageWidth - margin, y, { align: "right" });
   }
-  y += 6;
+  y += 15;
 
-  doc.setFontSize(11);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
+  // Degree info
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
 
-  const educationDetails = [];
-  if (profile.major) educationDetails.push(profile.major);
-  if (profile.gpa) educationDetails.push(`GPA: ${profile.gpa}`);
-
-  if (educationDetails.length > 0) {
-    doc.text(educationDetails.join("  |  "), 20, y);
+  let degreeText = "";
+  if (profile.major) {
+    degreeText = `Bachelor's in ${profile.major}`;
   }
-  y += 15;
+  if (profile.gpa) {
+    degreeText += degreeText ? `  •  GPA: ${profile.gpa}` : `GPA: ${profile.gpa}`;
+  }
+  if (degreeText) {
+    doc.text(degreeText, margin, y);
+  }
+  y += 30;
 
-  // Skills Section
+  // ============================================
+  // SKILLS SECTION
+  // ============================================
   if (profile.skills && profile.skills.length > 0) {
-    doc.setFontSize(14);
-    doc.setTextColor(teal[0], teal[1], teal[2]);
+    // Section header
     doc.setFont("helvetica", "bold");
-    doc.text("SKILLS", 20, y);
-    y += 8;
-
     doc.setFontSize(11);
-    doc.setTextColor(navy[0], navy[1], navy[2]);
-    doc.setFont("helvetica", "normal");
+    doc.setTextColor(black[0], black[1], black[2]);
+    doc.text("SKILLS", margin, y);
+    y += 18;
 
-    // Wrap skills text
-    const skillsText = profile.skills.join("  •  ");
-    const splitSkills = doc.splitTextToSize(skillsText, 170);
-    doc.text(splitSkills, 20, y);
-    y += splitSkills.length * 6 + 10;
+    // Skills as comma-separated list
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+
+    const skillsText = profile.skills.join(", ");
+    const splitSkills = doc.splitTextToSize(skillsText, contentWidth);
+    doc.text(splitSkills, margin, y);
+    y += splitSkills.length * 14 + 20;
   }
 
-  // Interests Section
+  // ============================================
+  // EXPERIENCE SECTION
+  // ============================================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(black[0], black[1], black[2]);
+  doc.text("EXPERIENCE", margin, y);
+  y += 18;
+
+  // Placeholder experience entry
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text("Position Title", margin, y);
+  doc.setFont("helvetica", "normal");
+  doc.text("Month Year – Present", pageWidth - margin, y, { align: "right" });
+  y += 14;
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10);
+  doc.text("Company Name, Location", margin, y);
+  y += 16;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+  const bullets = [
+    "• Add your accomplishments and responsibilities here",
+    "• Use action verbs and quantify results when possible",
+    "• Keep bullet points concise and impactful",
+  ];
+  bullets.forEach((bullet) => {
+    doc.text(bullet, margin + 10, y);
+    y += 14;
+  });
+  y += 20;
+
+  // ============================================
+  // PROJECTS SECTION
+  // ============================================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(black[0], black[1], black[2]);
+  doc.text("PROJECTS", margin, y);
+  y += 18;
+
+  // Placeholder project entry
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text("Project Name", margin, y);
+  y += 14;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+  const projectBullets = [
+    "• Describe what you built and the technologies used",
+    "• Highlight the impact or results of the project",
+  ];
+  projectBullets.forEach((bullet) => {
+    doc.text(bullet, margin + 10, y);
+    y += 14;
+  });
+  y += 20;
+
+  // ============================================
+  // INTERESTS SECTION (if they have any)
+  // ============================================
   if (profile.interests && profile.interests.length > 0) {
-    doc.setFontSize(14);
-    doc.setTextColor(teal[0], teal[1], teal[2]);
     doc.setFont("helvetica", "bold");
-    doc.text("INTERESTS", 20, y);
-    y += 8;
-
     doc.setFontSize(11);
-    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setTextColor(black[0], black[1], black[2]);
+    doc.text("INTERESTS", margin, y);
+    y += 18;
+
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-    const interestsText = profile.interests.join("  •  ");
-    const splitInterests = doc.splitTextToSize(interestsText, 170);
-    doc.text(splitInterests, 20, y);
-    y += splitInterests.length * 6 + 10;
+    const interestsText = profile.interests.join(", ");
+    const splitInterests = doc.splitTextToSize(interestsText, contentWidth);
+    doc.text(splitInterests, margin, y);
   }
-
-  // Experience Section (placeholder for users to fill)
-  doc.setFontSize(14);
-  doc.setTextColor(teal[0], teal[1], teal[2]);
-  doc.setFont("helvetica", "bold");
-  doc.text("EXPERIENCE", 20, y);
-  y += 8;
-
-  doc.setFontSize(11);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.setFont("helvetica", "italic");
-  doc.text("Add your work experience, internships, and projects here.", 20, y);
-  y += 15;
-
-  // Projects Section (placeholder)
-  doc.setFontSize(14);
-  doc.setTextColor(teal[0], teal[1], teal[2]);
-  doc.setFont("helvetica", "bold");
-  doc.text("PROJECTS", 20, y);
-  y += 8;
-
-  doc.setFontSize(11);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.setFont("helvetica", "italic");
-  doc.text("Add your personal or academic projects here.", 20, y);
-
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(180, 180, 180);
-  doc.text("Generated with ATLAS", 105, 285, { align: "center" });
 
   return doc;
 }
 
 export function downloadResume(profile: Profile) {
   const doc = generateResume(profile);
-  const fileName = `${(profile.full_name || "resume").replace(/\s+/g, "_")}_Resume.pdf`;
+  const firstName = profile.full_name?.split(" ")[0] || "Resume";
+  const fileName = `${firstName}_Resume.pdf`;
   doc.save(fileName);
 }
