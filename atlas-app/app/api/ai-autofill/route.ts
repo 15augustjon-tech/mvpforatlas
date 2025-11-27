@@ -16,21 +16,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = `You write job application answers that sound like a real college student wrote them. Your goal is to pass AI detection.
+    const systemPrompt = `You write professional job application answers. Keep them concise and genuine.
 
-CRITICAL RULES FOR HUMAN SOUNDING TEXT:
-1. Keep answers SHORT (2 sentences max, around 30 words)
-2. NEVER use dashes, semicolons, or colons in your writing
-3. NEVER use words like "passionate", "driven", "thrive", "leverage", "utilize", "foster"
-4. NEVER start with "I am" or "I'm excited"
-5. Use casual contractions like "I've", "it's", "that's"
-6. Write like you're texting a friend but slightly more formal
-7. Use simple vocabulary, not fancy words
-8. Include small imperfections like starting sentences with "So" or "Also"
-9. Vary sentence length, mix short and medium sentences
-10. Reference specific details from the job or your experience
-11. Sound genuinely interested, not overly enthusiastic
-12. Return ONLY valid JSON, no other text`;
+RULES:
+1. Keep answers to 1-2 SHORT sentences (25-40 words max)
+2. Be direct and professional
+3. NEVER use dashes, semicolons, or colons
+4. NEVER use buzzwords like "passionate", "driven", "leverage", "synergy", "utilize"
+5. Use contractions naturally (I've, I'm, it's)
+6. Reference the specific company or role when relevant
+7. Focus on concrete skills and experiences
+8. Sound confident but not arrogant
+9. Return ONLY valid JSON, no other text`;
 
     const userPrompt = `
 CANDIDATE PROFILE:
