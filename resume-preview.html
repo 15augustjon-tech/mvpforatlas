@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfect Resume Format - Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #e5e5e5;
+      padding: 40px;
+      line-height: 1.4;
+    }
+
+    .controls {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .controls h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .controls p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .resume {
+      width: 8.5in;
+      min-height: 11in;
+      background: white;
+      margin: 0 auto;
+      padding: 0.5in;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    /* Header - Name & Contact */
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 12px;
+    }
+
+    .name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 4px;
+    }
+
+    .contact {
+      font-size: 10px;
+      color: #000;
+    }
+
+    .contact a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000;
+      padding-bottom: 2px;
+      margin-bottom: 8px;
+    }
+
+    /* Entry Row - Title/Company on left, Date on right */
+    .entry {
+      margin-bottom: 10px;
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .entry-title {
+      font-size: 10px;
+      font-weight: bold;
+      color: #000;
+    }
+
+    .entry-date {
+      font-size: 10px;
+      color: #000;
+    }
+
+    .entry-subtitle {
+      font-size: 10px;
+      font-style: italic;
+      color: #000;
+      margin-bottom: 4px;
+    }
+
+    /* Bullets */
+    .bullets {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .bullets li {
+      font-size: 10px;
+      color: #000;
+      margin-bottom: 2px;
+      padding-left: 12px;
+      position: relative;
+    }
+
+    .bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+    }
+
+    /* Education specific */
+    .edu-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .edu-school {
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .edu-date {
+      font-size: 10px;
+    }
+
+    .edu-degree {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-style: italic;
+    }
+
+    .edu-coursework {
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    /* Skills */
+    .skills-row {
+      font-size: 10px;
+      margin-bottom: 2px;
+    }
+
+    .skills-category {
+      font-weight: bold;
+    }
+
+    /* Project with link */
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .project-title {
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .project-tech {
+      font-size: 10px;
+      font-style: italic;
+    }
+
+    .project-link {
+      font-size: 9px;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <h1>Perfect Intern Resume Format</h1>
+    <p>Based on Jake's Resume template, Harvard format, and ATS requirements. This is what we'll generate.</p>
+  </div>
+
+  <div class="resume">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="name">ALEX CHEN</div>
+      <div class="contact">
+        (555) 123-4567 | alexchen@berkeley.edu | <a href="#">linkedin.com/in/alexchen</a> | <a href="#">github.com/alexchen</a>
+      </div>
+    </div>
+
+    <!-- EDUCATION -->
+    <div class="section">
+      <div class="section-title">Education</div>
+      <div class="edu-row">
+        <span class="edu-school">University of California, Berkeley</span>
+        <span class="edu-date">Berkeley, CA</span>
+      </div>
+      <div class="edu-degree">
+        <span>B.S. Computer Science, Minor in Business Administration</span>
+        <span>May 2026</span>
+      </div>
+      <div class="edu-degree">
+        <span>GPA: 3.78/4.0</span>
+      </div>
+      <div class="edu-coursework">
+        <span class="skills-category">Relevant Coursework:</span> Data Structures, Algorithms, Machine Learning, Database Systems, Computer Architecture
+      </div>
+    </div>
+
+    <!-- EXPERIENCE -->
+    <div class="section">
+      <div class="section-title">Experience</div>
+
+      <div class="entry">
+        <div class="entry-header">
+          <span class="entry-title">Software Engineering Intern</span>
+          <span class="entry-date">Jun 2024 – Aug 2024</span>
+        </div>
+        <div class="entry-subtitle">Stripe, San Francisco, CA</div>
+        <ul class="bullets">
+          <li>Built payment reconciliation dashboard using React and Python, reducing manual review time by 40%</li>
+          <li>Designed and implemented REST API endpoints handling 10K+ daily requests with 99.9% uptime</li>
+          <li>Wrote 25+ unit tests improving code coverage from 60% to 92%, reducing production bugs by 30%</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="entry-header">
+          <span class="entry-title">Undergraduate Research Assistant</span>
+          <span class="entry-date">Jan 2024 – May 2024</span>
+        </div>
+        <div class="entry-subtitle">Berkeley Artificial Intelligence Research Lab, Berkeley, CA</div>
+        <ul class="bullets">
+          <li>Developed computer vision pipeline processing 10,000+ images daily for autonomous vehicle research</li>
+          <li>Optimized TensorFlow model training reducing GPU compute time by 35%, saving $2K/month in cloud costs</li>
+          <li>Co-authored research paper submitted to CVPR 2025 on real-time object detection</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="entry-header">
+          <span class="entry-title">Teaching Assistant – CS 61A</span>
+          <span class="entry-date">Aug 2023 – Dec 2023</span>
+        </div>
+        <div class="entry-subtitle">UC Berkeley EECS Department, Berkeley, CA</div>
+        <ul class="bullets">
+          <li>Led weekly discussion sections for 35 students, achieving 4.8/5.0 instructor rating</li>
+          <li>Held 6+ office hours weekly helping 50+ students debug Python assignments</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="section">
+      <div class="section-title">Projects</div>
+
+      <div class="entry">
+        <div class="project-header">
+          <span class="project-title">ATLAS – Internship Finder App</span>
+          <span class="entry-date">Nov 2024</span>
+        </div>
+        <div class="entry-subtitle">Next.js, TypeScript, Supabase, Tailwind CSS</div>
+        <ul class="bullets">
+          <li>Built full-stack web app aggregating 500+ internship postings from multiple job boards</li>
+          <li>Implemented Chrome extension for one-click auto-fill, reducing application time from 15 min to 30 sec</li>
+          <li>Deployed to Vercel with 99.9% uptime serving 100+ daily active users</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="project-header">
+          <span class="project-title">EcoTrack – Carbon Footprint Calculator</span>
+          <span class="entry-date">Oct 2023</span>
+        </div>
+        <div class="entry-subtitle">React Native, Node.js, MongoDB, OpenAI API</div>
+        <ul class="bullets">
+          <li>Created mobile app calculating personal carbon emissions with AI-powered recommendations</li>
+          <li>Won 2nd place at CalHacks 2023 (200+ teams), recognized for innovative use of LLMs</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="section">
+      <div class="section-title">Technical Skills</div>
+      <div class="skills-row">
+        <span class="skills-category">Languages:</span> Python, JavaScript, TypeScript, Java, C++, SQL, HTML/CSS
+      </div>
+      <div class="skills-row">
+        <span class="skills-category">Frameworks:</span> React, Next.js, Node.js, Express, Flask, Django, TensorFlow, PyTorch
+      </div>
+      <div class="skills-row">
+        <span class="skills-category">Tools:</span> Git, Docker, AWS (EC2, S3, Lambda), PostgreSQL, MongoDB, Figma, Linux
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
