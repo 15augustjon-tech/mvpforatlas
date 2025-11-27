@@ -30,7 +30,8 @@
       "Bash(/opt/homebrew/bin/python3.11:*)",
       "Bash(open:*)",
       "Bash(npx tsc:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
