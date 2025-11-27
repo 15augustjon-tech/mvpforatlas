@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "./supabase";
 import { fetchAdzunaInternships } from "./fetchers/adzuna";
 import { fetchArbeitnowJobs } from "./fetchers/arbeitnow";
+import { fetchRemoteOKJobs } from "./fetchers/remoteok";
+import { fetchRemotiveJobs } from "./fetchers/remotive";
 
 export async function syncOpportunities(): Promise<{
   added: number;
@@ -14,7 +16,7 @@ export async function syncOpportunities(): Promise<{
   console.log("Starting opportunity sync...");
 
   // Fetch from all sources
-  const [adzunaJobs, arbeitnowJobs] = await Promise.all([
+  const [adzunaJobs, arbeitnowJobs, remoteokJobs, remotiveJobs] = await Promise.all([
     fetchAdzunaInternships().catch(err => {
       errors.push(`Adzuna: ${err.message}`);
       return [];
@@ -23,9 +25,17 @@ export async function syncOpportunities(): Promise<{
       errors.push(`Arbeitnow: ${err.message}`);
       return [];
     }),
+    fetchRemoteOKJobs().catch(err => {
+      errors.push(`RemoteOK: ${err.message}`);
+      return [];
+    }),
+    fetchRemotiveJobs().catch(err => {
+      errors.push(`Remotive: ${err.message}`);
+      return [];
+    }),
   ]);
 
-  const allOpportunities = [...adzunaJobs, ...arbeitnowJobs];
+  const allOpportunities = [...adzunaJobs, ...arbeitnowJobs, ...remoteokJobs, ...remotiveJobs];
   console.log(`Fetched ${allOpportunities.length} total opportunities`);
 
   // Upsert to database
