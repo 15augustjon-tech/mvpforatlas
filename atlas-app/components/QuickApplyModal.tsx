@@ -1,6 +1,7 @@
 "use client";
 
-import { X, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { X, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { Opportunity, Profile } from "@/types/database";
 
 interface QuickApplyModalProps {
@@ -16,7 +17,54 @@ export default function QuickApplyModal({
   onClose,
   onApply,
 }: QuickApplyModalProps) {
-  const handleApply = () => {
+  const [isAutoApplying, setIsAutoApplying] = useState(false);
+  const [autoApplyStatus, setAutoApplyStatus] = useState<string | null>(null);
+
+  const handleAutoApply = async () => {
+    setIsAutoApplying(true);
+    setAutoApplyStatus("Starting auto-fill...");
+
+    try {
+      const response = await fetch("/api/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobUrl: opportunity.url,
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+          companyName: opportunity.company,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setAutoApplyStatus("Form pre-filled! Opening application...");
+        setTimeout(() => {
+          window.open(opportunity.url, "_blank");
+          onApply();
+          onClose();
+        }, 1500);
+      } else {
+        setAutoApplyStatus(result.message || "Could not auto-fill. Opening manually...");
+        setTimeout(() => {
+          window.open(opportunity.url, "_blank");
+          onApply();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Auto-apply error:", error);
+      setAutoApplyStatus("Error. Opening application manually...");
+      setTimeout(() => {
+        window.open(opportunity.url, "_blank");
+        onApply();
+      }, 1500);
+    } finally {
+      setIsAutoApplying(false);
+    }
+  };
+
+  const handleManualApply = () => {
     onApply();
     window.open(opportunity.url, "_blank");
   };
@@ -120,18 +168,44 @@ export default function QuickApplyModal({
             </div>
           </div>
 
-          {/* Apply Button */}
+          {/* Status Message */}
+          {autoApplyStatus && (
+            <div className="mb-4 p-3 bg-teal/10 rounded-lg text-center">
+              <p className="text-sm text-teal font-medium">{autoApplyStatus}</p>
+            </div>
+          )}
+
+          {/* Auto-Apply Button */}
           <button
-            onClick={handleApply}
-            className="w-full py-3 sm:py-4 bg-teal text-white rounded-lg sm:rounded-input font-medium text-sm sm:text-base hover:bg-teal/90 transition-colors active:bg-teal/80 flex items-center justify-center gap-2"
+            onClick={handleAutoApply}
+            disabled={isAutoApplying}
+            className="w-full py-3 sm:py-4 bg-gradient-to-r from-teal to-blue-500 text-white rounded-lg sm:rounded-input font-medium text-sm sm:text-base hover:opacity-90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-            Open Application
+            {isAutoApplying ? (
+              <>
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                Auto-filling...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                Auto-Fill & Apply
+              </>
+            )}
           </button>
 
-          <p className="text-center text-xs sm:text-sm text-gray-text mt-2 sm:mt-3">
-            You&apos;ll be redirected to complete the application
+          <p className="text-center text-xs text-gray-text mt-2">
+            Steel AI will pre-fill the application form for you
           </p>
+
+          {/* Manual Apply Button */}
+          <button
+            onClick={handleManualApply}
+            className="w-full mt-3 py-2.5 sm:py-3 border border-gray-200 text-gray-text rounded-lg sm:rounded-input font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open Manually
+          </button>
         </div>
       </div>
     </div>
