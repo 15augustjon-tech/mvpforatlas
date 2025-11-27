@@ -317,9 +317,7 @@ export default function FeedPage() {
       <div className="px-4 pb-2">
         <div className="flex items-center gap-2 text-sm text-gray-text">
           <MapPin className="w-4 h-4" />
-          <span>California</span>
-          <span className="mx-2">•</span>
-          <span>4 sources</span>
+          <span>Remote & US</span>
           <span className="text-navy font-medium ml-auto">
             {filteredOpportunities.length} opportunities
           </span>

@@ -1,15 +1,7 @@
 "use client";
 
-import { Bookmark, CheckCircle, MapPin, Clock, Globe } from "lucide-react";
+import { Bookmark, CheckCircle, MapPin, Clock } from "lucide-react";
 import { Opportunity } from "@/types/database";
-
-// Map source IDs to display names
-const sourceNames: Record<string, string> = {
-  adzuna: "Adzuna",
-  arbeitnow: "Arbeitnow",
-  remoteok: "RemoteOK",
-  remotive: "Remotive",
-};
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -96,14 +88,6 @@ export default function OpportunityCard({
             ? `From $${opportunity.salary_min.toLocaleString()}`
             : `Up to $${opportunity.salary_max?.toLocaleString()}`}
         </p>
-      )}
-
-      {/* Source */}
-      {opportunity.source && (
-        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-text mb-2.5 sm:mb-3">
-          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>via {sourceNames[opportunity.source] || opportunity.source}</span>
-        </div>
       )}
 
       {/* Quick Apply Button */}
