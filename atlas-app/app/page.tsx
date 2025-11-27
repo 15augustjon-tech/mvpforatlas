@@ -25,10 +25,10 @@ export default function Home() {
       {/* Hero Section */}
       <main className="max-w-6xl mx-auto px-4 py-20">
         <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-5xl font-bold text-navy mb-6">
+          <h2 className="text-5xl font-bold text-navy mb-6 leading-tight">
             Every Opportunity.
             <br />
-            <span className="text-teal">One Place.</span>
+            <span className="text-teal mt-2 inline-block">One Place.</span>
           </h2>
           <p className="text-xl text-gray-text mb-8">
             Find internships, hackathons, scholarships, and more. Personalized
