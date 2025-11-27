@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
 import FilterChip from "@/components/FilterChip";
-import QuickApplyModal from "@/components/QuickApplyModal";
+import InAppApplyModal from "@/components/InAppApplyModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { createClient } from "@/lib/supabase/client";
 import { Opportunity, Profile } from "@/types/database";
@@ -345,13 +345,13 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Quick Apply Modal */}
+      {/* In-App Apply Modal */}
       {selectedOpportunity && (
-        <QuickApplyModal
+        <InAppApplyModal
           opportunity={selectedOpportunity}
           profile={profile}
           onClose={() => setSelectedOpportunity(null)}
-          onApply={handleConfirmApply}
+          onApplied={handleConfirmApply}
         />
       )}
 

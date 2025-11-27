@@ -6,7 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
-import QuickApplyModal from "@/components/QuickApplyModal";
+import InAppApplyModal from "@/components/InAppApplyModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { createClient } from "@/lib/supabase/client";
 import { Opportunity, Profile, SavedOpportunity } from "@/types/database";
@@ -151,13 +151,13 @@ export default function SavedPage() {
         )}
       </div>
 
-      {/* Quick Apply Modal */}
+      {/* In-App Apply Modal */}
       {selectedOpportunity && (
-        <QuickApplyModal
+        <InAppApplyModal
           opportunity={selectedOpportunity}
           profile={profile}
           onClose={() => setSelectedOpportunity(null)}
-          onApply={handleConfirmApply}
+          onApplied={handleConfirmApply}
         />
       )}
 
