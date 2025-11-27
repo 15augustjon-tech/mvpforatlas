@@ -34,56 +34,56 @@ export default function OpportunityCard({
   isSaved,
 }: OpportunityCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-card p-4 mb-3 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-xl sm:rounded-card p-3 sm:p-4 mb-3 hover:shadow-md transition-shadow active:scale-[0.99]">
       {/* Top row */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
         <span
-          className={`text-xs font-medium px-2 py-1 rounded-full ${
+          className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-full ${
             categoryColors[opportunity.opportunity_type] || "bg-gray-200"
           }`}
         >
           {opportunity.opportunity_type.charAt(0).toUpperCase() +
             opportunity.opportunity_type.slice(1)}
         </span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-teal flex items-center gap-1">
-            <CheckCircle className="w-4 h-4" />
-            {opportunity.match_score}% match
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-xs sm:text-sm text-teal flex items-center gap-0.5 sm:gap-1">
+            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {opportunity.match_score}%
           </span>
           <button
             onClick={onSave}
-            className={`p-1.5 rounded-full transition-colors ${
+            className={`p-1 sm:p-1.5 rounded-full transition-colors ${
               isSaved ? "text-teal bg-teal/10" : "text-gray-text hover:bg-gray-100"
             }`}
           >
-            <Bookmark className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+            <Bookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${isSaved ? "fill-current" : ""}`} />
           </button>
         </div>
       </div>
 
       {/* Company & Title */}
-      <h3 className="font-bold text-navy text-lg">{opportunity.company}</h3>
-      <p className="text-gray-text mb-2">{opportunity.title}</p>
+      <h3 className="font-bold text-navy text-base sm:text-lg leading-tight">{opportunity.company}</h3>
+      <p className="text-sm sm:text-base text-gray-text mb-1.5 sm:mb-2 line-clamp-2">{opportunity.title}</p>
 
       {/* Location */}
-      <div className="flex items-center gap-1 text-sm text-gray-text mb-3">
-        <MapPin className="w-4 h-4" />
-        <span>{opportunity.location}</span>
+      <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-text mb-2 sm:mb-3">
+        <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+        <span className="truncate">{opportunity.location}</span>
       </div>
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
         {opportunity.tags.slice(0, 3).map((tag, index) => (
           <span
             key={index}
-            className="text-xs bg-gray-light text-gray-text px-2 py-1 rounded-full"
+            className="text-[10px] sm:text-xs bg-gray-light text-gray-text px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full"
           >
             {tag}
           </span>
         ))}
         {opportunity.posted_date && (
-          <span className="text-xs bg-gray-light text-gray-text px-2 py-1 rounded-full flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+          <span className="text-[10px] sm:text-xs bg-gray-light text-gray-text px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-0.5 sm:gap-1">
+            <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             {new Date(opportunity.posted_date).toLocaleDateString()}
           </span>
         )}
@@ -91,7 +91,7 @@ export default function OpportunityCard({
 
       {/* Salary if available */}
       {(opportunity.salary_min || opportunity.salary_max) && (
-        <p className="text-sm text-gray-text mb-3">
+        <p className="text-xs sm:text-sm text-green-600 font-medium mb-2 sm:mb-3">
           {opportunity.salary_min && opportunity.salary_max
             ? `$${opportunity.salary_min.toLocaleString()} - $${opportunity.salary_max.toLocaleString()}`
             : opportunity.salary_min
@@ -101,15 +101,15 @@ export default function OpportunityCard({
       )}
 
       {/* Social Proof */}
-      <div className="flex items-center gap-2 text-sm text-gray-text mb-3">
-        <Users className="w-4 h-4" />
+      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-text mb-2.5 sm:mb-3">
+        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         <span>{getApplicantCount(opportunity.id)} students applied</span>
       </div>
 
       {/* Quick Apply Button */}
       <button
         onClick={onApply}
-        className="w-full py-3 bg-teal text-white rounded-input font-medium hover:bg-teal/90 transition-colors"
+        className="w-full py-2.5 sm:py-3 bg-teal text-white rounded-lg sm:rounded-input font-medium text-sm sm:text-base hover:bg-teal/90 transition-colors active:bg-teal/80"
       >
         Quick Apply
       </button>
