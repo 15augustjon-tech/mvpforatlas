@@ -1,5 +1,5 @@
 // ATLAS Extension Popup Script
-const API_URL = "http://localhost:3001"; // Change to your deployed URL
+const API_URL = "http://localhost:3000"; // Change to your deployed URL
 
 document.addEventListener("DOMContentLoaded", async () => {
   const statusDot = document.getElementById("statusDot");
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (profile && profile.full_name) {
     statusDot.classList.add("connected");
-    statusText.textContent = `Ready: ${profile.full_name}`;
+    statusText.textContent = "Ready: " + profile.full_name;
     fillBtn.disabled = false;
   } else {
     statusDot.classList.add("disconnected");
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (response && response.success) {
           result.className = "result success";
-          result.textContent = `Filled ${response.fieldsCount} fields with AI!`;
+          result.textContent = "Filled " + response.fieldsCount + " fields with AI!";
           result.style.display = "block";
         } else {
           result.className = "result error";
@@ -83,7 +83,7 @@ async function getProfile() {
           } else {
             resolve(null);
           }
-        } catch {
+        } catch (e) {
           resolve(null);
         }
       }

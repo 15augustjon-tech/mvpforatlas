@@ -256,9 +256,9 @@ Return JSON only with field identifiers as keys and values to fill.`,
 
     // Check for resume upload
     const hasResumeUpload = await page.evaluate(() => {
-      const fileInputs = document.querySelectorAll('input[type="file"]');
-      for (const input of fileInputs) {
-        const el = input as HTMLInputElement;
+      const fileInputs = Array.from(document.querySelectorAll('input[type="file"]'));
+      for (let i = 0; i < fileInputs.length; i++) {
+        const el = fileInputs[i] as HTMLInputElement;
         const text = (el.name + el.id + (el.accept || "")).toLowerCase();
         if (
           text.includes("resume") ||

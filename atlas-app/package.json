@@ -13,6 +13,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.84.0",
+    "canvas": "^3.2.0",
     "date-fns": "^4.1.0",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.554.0",
