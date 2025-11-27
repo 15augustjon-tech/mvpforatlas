@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #14b8a6, #3b82f6);
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .status {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    .status-dot.connected {
+      background: #22c55e;
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #14b8a6;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .row .form-group {
+      flex: 1;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #14b8a6, #3b82f6);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+    }
+
+    .btn-fill {
+      background: #22c55e;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .btn-fill:hover {
+      background: #16a34a;
+    }
+
+    .divider {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 12px;
+      margin: 16px 0;
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+
+    .saved-badge {
+      background: #dcfce7;
+      color: #16a34a;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: #1e293b;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
+
+    .toast.show {
+      display: block;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ATLAS Auto-Fill</h1>
+    <p>Fill job applications instantly</p>
+  </div>
+
+  <div class="content">
+    <div class="status" id="status">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-text" id="statusText">Not configured</span>
+      <span class="saved-badge" id="savedBadge" style="display: none;">Saved</span>
+    </div>
+
+    <p class="section-title">Your Profile</p>
+
+    <div class="row">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="firstName" placeholder="John">
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="lastName" placeholder="Doe">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="john@university.edu">
+    </div>
+
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="tel" id="phone" placeholder="(555) 123-4567">
+    </div>
+
+    <div class="form-group">
+      <label>LinkedIn URL</label>
+      <input type="url" id="linkedin" placeholder="linkedin.com/in/johndoe">
+    </div>
+
+    <div class="form-group">
+      <label>University</label>
+      <input type="text" id="university" placeholder="UC Berkeley">
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Major</label>
+        <input type="text" id="major" placeholder="Computer Science">
+      </div>
+      <div class="form-group">
+        <label>Grad Year</label>
+        <input type="text" id="gradYear" placeholder="2025">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>GPA (optional)</label>
+      <input type="text" id="gpa" placeholder="3.8">
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn">Save Profile</button>
+
+    <div class="divider">on a job page?</div>
+
+    <button class="btn btn-fill" id="fillBtn">Auto-Fill This Page</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

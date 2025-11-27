@@ -17,7 +17,17 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(git stash pop:*)"
+      "Bash(git stash pop:*)",
+      "Bash(npm run build:*)",
+      "Bash(gh api:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(/Users/alex/Library/Python/3.9/bin/playwright install:*)",
+      "Bash(python3:*)",
+      "Bash(brew install:*)",
+      "Bash(/opt/homebrew/bin/pip3.11 install:*)",
+      "Bash(/opt/homebrew/bin/python3.11 -m playwright install:*)",
+      "Bash(/opt/homebrew/bin/python3.11:*)"
     ],
     "deny": [],
     "ask": []

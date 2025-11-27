@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, MapPin, GraduationCap, Briefcase, X, Plus, FileText, Upload } from "lucide-react";
+import { LogOut, MapPin, GraduationCap, Briefcase, X, Plus, FileText, Upload, Download, Sparkles } from "lucide-react";
+import { downloadResume } from "@/lib/generateResume";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -388,42 +389,58 @@ export default function ProfilePage() {
             <FileText className="w-5 h-5 text-teal" />
             <span className="font-medium text-navy">Resume</span>
           </div>
-          <div className="ml-8">
-            {profile?.resume_url ? (
-              <div className="flex items-center gap-3">
-                <a
-                  href={profile.resume_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal underline text-sm"
-                >
-                  View Resume
-                </a>
-                <label className="text-gray-text text-sm cursor-pointer hover:text-teal">
-                  Replace
+          <div className="ml-8 space-y-3">
+            {/* Generate Resume Button */}
+            <button
+              onClick={() => profile && downloadResume(profile)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-teal to-blue-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="w-5 h-5" />
+              Generate Resume from Profile
+            </button>
+            <p className="text-xs text-gray-text text-center">
+              Creates a PDF resume using your profile info
+            </p>
+
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs text-gray-text mb-2">Or upload your own:</p>
+              {profile?.resume_url ? (
+                <div className="flex items-center gap-3">
+                  <a
+                    href={profile.resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal underline text-sm flex items-center gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    View Uploaded Resume
+                  </a>
+                  <label className="text-gray-text text-sm cursor-pointer hover:text-teal">
+                    Replace
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-teal transition-colors">
+                  <Upload className="w-5 h-5 text-gray-text" />
+                  <span className="text-gray-text text-sm">
+                    {resumeUploading ? "Uploading..." : "Upload Resume (PDF, DOC)"}
+                  </span>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx"
                     onChange={handleResumeUpload}
                     className="hidden"
+                    disabled={resumeUploading}
                   />
                 </label>
-              </div>
-            ) : (
-              <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-teal transition-colors">
-                <Upload className="w-5 h-5 text-gray-text" />
-                <span className="text-gray-text text-sm">
-                  {resumeUploading ? "Uploading..." : "Upload Resume (PDF, DOC)"}
-                </span>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleResumeUpload}
-                  className="hidden"
-                  disabled={resumeUploading}
-                />
-              </label>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
