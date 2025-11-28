@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, CheckCircle, MapPin, Clock } from "lucide-react";
+import { Bookmark, CheckCircle, MapPin, Clock, Square, CheckSquare } from "lucide-react";
 import { Opportunity } from "@/types/database";
 
 interface OpportunityCardProps {
@@ -8,6 +8,9 @@ interface OpportunityCardProps {
   onSave: () => void;
   onApply: () => void;
   isSaved: boolean;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 const categoryColors: Record<string, string> = {
@@ -22,32 +25,53 @@ export default function OpportunityCard({
   onSave,
   onApply,
   isSaved,
+  selectMode = false,
+  isSelected = false,
+  onSelect,
 }: OpportunityCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl sm:rounded-card p-3 sm:p-4 mb-3 hover:shadow-md transition-shadow active:scale-[0.99]">
+    <div
+      className={`bg-white border rounded-xl sm:rounded-card p-3 sm:p-4 mb-3 hover:shadow-md transition-all active:scale-[0.99] ${
+        isSelected ? "border-teal border-2 bg-teal/5" : "border-gray-200"
+      }`}
+      onClick={selectMode ? onSelect : undefined}
+    >
       {/* Top row */}
       <div className="flex items-center justify-between mb-2 sm:mb-3">
-        <span
-          className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-full ${
-            categoryColors[opportunity.opportunity_type] || "bg-gray-200"
-          }`}
-        >
-          {opportunity.opportunity_type.charAt(0).toUpperCase() +
-            opportunity.opportunity_type.slice(1)}
-        </span>
+        <div className="flex items-center gap-2">
+          {selectMode && (
+            <button onClick={onSelect} className="flex-shrink-0">
+              {isSelected ? (
+                <CheckSquare className="w-5 h-5 text-teal" />
+              ) : (
+                <Square className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+          )}
+          <span
+            className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-full ${
+              categoryColors[opportunity.opportunity_type] || "bg-gray-200"
+            }`}
+          >
+            {opportunity.opportunity_type.charAt(0).toUpperCase() +
+              opportunity.opportunity_type.slice(1)}
+          </span>
+        </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-xs sm:text-sm text-teal flex items-center gap-0.5 sm:gap-1">
             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             {opportunity.match_score}%
           </span>
-          <button
-            onClick={onSave}
-            className={`p-1 sm:p-1.5 rounded-full transition-colors ${
-              isSaved ? "text-teal bg-teal/10" : "text-gray-text hover:bg-gray-100"
-            }`}
-          >
-            <Bookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${isSaved ? "fill-current" : ""}`} />
-          </button>
+          {!selectMode && (
+            <button
+              onClick={onSave}
+              className={`p-1 sm:p-1.5 rounded-full transition-colors ${
+                isSaved ? "text-teal bg-teal/10" : "text-gray-text hover:bg-gray-100"
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${isSaved ? "fill-current" : ""}`} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -91,12 +115,14 @@ export default function OpportunityCard({
       )}
 
       {/* Quick Apply Button */}
-      <button
-        onClick={onApply}
-        className="w-full py-2.5 sm:py-3 bg-teal text-white rounded-lg sm:rounded-input font-medium text-sm sm:text-base hover:bg-teal/90 transition-colors active:bg-teal/80"
-      >
-        Quick Apply
-      </button>
+      {!selectMode && (
+        <button
+          onClick={onApply}
+          className="w-full py-2.5 sm:py-3 bg-teal text-white rounded-lg sm:rounded-input font-medium text-sm sm:text-base hover:bg-teal/90 transition-colors active:bg-teal/80"
+        >
+          Quick Apply
+        </button>
+      )}
     </div>
   );
 }

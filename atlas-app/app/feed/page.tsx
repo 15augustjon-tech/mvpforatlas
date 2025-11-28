@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Search, X, TrendingUp, SlidersHorizontal } from "lucide-react";
+import { MapPin, Search, X, TrendingUp, SlidersHorizontal, CheckSquare, Square, ShoppingCart } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import OpportunityCard from "@/components/OpportunityCard";
 import FilterChip from "@/components/FilterChip";
 import InAppApplyModal from "@/components/InAppApplyModal";
+import BatchApplyModal from "@/components/BatchApplyModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { createClient } from "@/lib/supabase/client";
 import { Opportunity, Profile } from "@/types/database";
+import { useRouter } from "next/navigation";
 
 const filters = [
   { id: "all", label: "All" },
@@ -30,9 +32,13 @@ export default function FeedPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [weeklyStats, setWeeklyStats] = useState({ applied: 0, saved: 0 });
   const [showFilters, setShowFilters] = useState(false);
-  const [salaryFilter, setSalaryFilter] = useState("any"); // any, has-salary
-  const [dateFilter, setDateFilter] = useState("any"); // any, today, week, month
+  const [salaryFilter, setSalaryFilter] = useState("any");
+  const [dateFilter, setDateFilter] = useState("any");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBatchModal, setShowBatchModal] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     loadProfile();
@@ -158,6 +164,29 @@ export default function FeedPage() {
     setSelectedOpportunity(opportunity);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    if (selectMode) {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const getSelectedOpportunities = () => {
+    return filteredOpportunities.filter(o => selectedIds.has(o.id));
+  };
+
   const handleConfirmApply = async () => {
     if (!selectedOpportunity) return;
 
@@ -242,6 +271,17 @@ export default function FeedPage() {
               onClick={() => setActiveFilter(filter.id)}
             />
           ))}
+          <button
+            onClick={toggleSelectMode}
+            className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              selectMode
+                ? "bg-purple-500 text-white"
+                : "bg-gray-light text-gray-text"
+            }`}
+          >
+            {selectMode ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+            {selectMode ? `${selectedIds.size} Selected` : "Select"}
+          </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
@@ -336,6 +376,9 @@ export default function FeedPage() {
               onSave={() => handleSave(opportunity)}
               onApply={() => handleApply(opportunity)}
               isSaved={savedIds.has(opportunity.id)}
+              selectMode={selectMode}
+              isSelected={selectedIds.has(opportunity.id)}
+              onSelect={() => toggleSelect(opportunity.id)}
             />
           ))
         ) : (
@@ -345,6 +388,19 @@ export default function FeedPage() {
         )}
       </div>
 
+      {/* Floating Checkout Button */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-24 left-4 right-4 z-40">
+          <button
+            onClick={() => setShowBatchModal(true)}
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98]"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            Apply to {selectedIds.size} Jobs
+          </button>
+        </div>
+      )}
+
       {/* In-App Apply Modal */}
       {selectedOpportunity && (
         <InAppApplyModal
@@ -352,6 +408,21 @@ export default function FeedPage() {
           profile={profile}
           onClose={() => setSelectedOpportunity(null)}
           onApplied={handleConfirmApply}
+        />
+      )}
+
+      {/* Batch Apply Modal */}
+      {showBatchModal && (
+        <BatchApplyModal
+          opportunities={getSelectedOpportunities()}
+          profile={profile}
+          onClose={() => setShowBatchModal(false)}
+          onComplete={() => {
+            setShowBatchModal(false);
+            setSelectMode(false);
+            setSelectedIds(new Set());
+            router.push("/applications");
+          }}
         />
       )}
 
