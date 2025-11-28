@@ -52,27 +52,34 @@ export default function BatchApplyModal({
       work_auth: "Yes",
     };
 
-    for (const questionId of questions) {
-      try {
-        const response = await fetch("/api/ai-autofill", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            formFields: [{ id: questionId, name: questionId, type: "textarea", label: questionId }],
-            jobDescription: `${job.title} at ${job.company}. ${job.description || ""}`,
-            userProfile: profile,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.success && data.filledData) {
-          const answer = data.filledData[questionId] || data.filledData[Object.keys(data.filledData)[0]];
-          if (answer) jobAnswers[questionId] = answer;
+    // Run all AI calls in parallel for speed
+    const results = await Promise.all(
+      questions.map(async (questionId) => {
+        try {
+          const response = await fetch("/api/ai-autofill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              formFields: [{ id: questionId, name: questionId, type: "textarea", label: questionId }],
+              jobDescription: `${job.title} at ${job.company}. ${job.description || ""}`,
+              userProfile: profile,
+            }),
+          });
+          const data = await response.json();
+          if (data.success && data.filledData) {
+            const answer = data.filledData[questionId] || data.filledData[Object.keys(data.filledData)[0]];
+            return { questionId, answer };
+          }
+        } catch (error) {
+          console.error(`Error generating ${questionId}:`, error);
         }
-      } catch (error) {
-        console.error(`Error generating ${questionId}:`, error);
-      }
-    }
+        return null;
+      })
+    );
+
+    results.forEach((result) => {
+      if (result?.answer) jobAnswers[result.questionId] = result.answer;
+    });
 
     setAnswers(prev => ({ ...prev, [job.id]: jobAnswers }));
     setIsGenerating(false);
@@ -112,33 +119,39 @@ export default function BatchApplyModal({
   const submitAll = async () => {
     setIsSubmitting(true);
 
-    for (let i = 0; i < opportunities.length; i++) {
-      if (completed.has(i)) continue;
-
-      const job = opportunities[i];
-      if (!answers[job.id]) {
-        await generateAnswersForJob(job);
-      }
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) continue;
-
-        await supabase.from("applications").insert({
-          user_id: user.id,
-          opportunity_id: job.id,
-          opportunity_title: job.title,
-          company_name: job.company,
-          status: "applied",
-          application_data: answers[job.id] || {},
-          job_url: job.url,
-        });
-
-        setCompleted(prev => new Set(prev).add(i));
-      } catch (error) {
-        console.error(`Error applying to ${job.company}:`, error);
-      }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsSubmitting(false);
+      return;
     }
+
+    // Generate all missing answers in parallel
+    const jobsNeedingAnswers = opportunities.filter((job, i) => !completed.has(i) && !answers[job.id]);
+    if (jobsNeedingAnswers.length > 0) {
+      await Promise.all(jobsNeedingAnswers.map(job => generateAnswersForJob(job)));
+    }
+
+    // Submit all applications in parallel
+    await Promise.all(
+      opportunities.map(async (job, i) => {
+        if (completed.has(i)) return;
+
+        try {
+          await supabase.from("applications").insert({
+            user_id: user.id,
+            opportunity_id: job.id,
+            opportunity_title: job.title,
+            company_name: job.company,
+            status: "applied",
+            application_data: answers[job.id] || {},
+            job_url: job.url,
+          });
+          setCompleted(prev => new Set(prev).add(i));
+        } catch (error) {
+          console.error(`Error applying to ${job.company}:`, error);
+        }
+      })
+    );
 
     setIsSubmitting(false);
   };

@@ -164,35 +164,43 @@ export default function InAppApplyModal({
 
     const questionsWithAI = APPLICATION_QUESTIONS.filter(q => q.aiPrompt);
 
-    for (const question of questionsWithAI) {
-      setGeneratingAI(question.id);
-      try {
-        const response = await fetch("/api/ai-autofill", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            formFields: [{
-              id: question.id,
-              name: question.id,
-              type: "textarea",
-              label: question.aiPrompt
-            }],
-            jobDescription: `${opportunity.title} at ${opportunity.company}. ${opportunity.description || ""}`,
-            userProfile: profile,
-          }),
-        });
+    // Run all AI calls in parallel for speed
+    const results = await Promise.all(
+      questionsWithAI.map(async (question) => {
+        try {
+          const response = await fetch("/api/ai-autofill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              formFields: [{
+                id: question.id,
+                name: question.id,
+                type: "textarea",
+                label: question.aiPrompt
+              }],
+              jobDescription: `${opportunity.title} at ${opportunity.company}. ${opportunity.description || ""}`,
+              userProfile: profile,
+            }),
+          });
 
-        const data = await response.json();
-        if (data.success && data.filledData) {
-          const answer = data.filledData[question.id] || data.filledData[Object.keys(data.filledData)[0]];
-          if (answer) {
-            setFormData(prev => ({ ...prev, [question.id]: answer }));
+          const data = await response.json();
+          if (data.success && data.filledData) {
+            const answer = data.filledData[question.id] || data.filledData[Object.keys(data.filledData)[0]];
+            return { id: question.id, answer };
           }
+        } catch (error) {
+          console.error(`AI generation error for ${question.id}:`, error);
         }
-      } catch (error) {
-        console.error(`AI generation error for ${question.id}:`, error);
-      }
-    }
+        return null;
+      })
+    );
+
+    // Update form data with all answers at once
+    const newAnswers: Record<string, string> = {};
+    results.forEach((result) => {
+      if (result?.answer) newAnswers[result.id] = result.answer;
+    });
+    setFormData(prev => ({ ...prev, ...newAnswers }));
 
     setGeneratingAI(null);
     setGeneratingAll(false);
