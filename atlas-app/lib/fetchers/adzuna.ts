@@ -53,7 +53,6 @@ export async function fetchAdzunaInternships(): Promise<Opportunity[]> {
         what: query,
         where: "California",
         results_per_page: "50",
-        content_type: "application/json",
       });
 
       const response = await fetch(`${BASE_URL}?${params}`);
@@ -76,8 +75,8 @@ export async function fetchAdzunaInternships(): Promise<Opportunity[]> {
           company: job.company?.display_name || "Unknown Company",
           location: location,
           description: job.description?.slice(0, 500) || "",
-          salary_min: job.salary_min || null,
-          salary_max: job.salary_max || null,
+          salary_min: job.salary_min ? Math.round(job.salary_min) : null,
+          salary_max: job.salary_max ? Math.round(job.salary_max) : null,
           url: job.redirect_url,
           posted_date: job.created,
           category: job.category?.label || "Technology",
