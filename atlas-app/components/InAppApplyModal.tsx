@@ -16,6 +16,8 @@ import {
   FileText,
   Send,
   Pencil,
+  Bot,
+  ExternalLink,
 } from "lucide-react";
 import { Opportunity, Profile } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
@@ -64,6 +66,14 @@ export default function InAppApplyModal({
   const [showDescription, setShowDescription] = useState(false);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
   const [autoFillDone, setAutoFillDone] = useState(false);
+  const [isAutoApplying, setIsAutoApplying] = useState(false);
+  const [autoApplyResult, setAutoApplyResult] = useState<{
+    success: boolean;
+    status: string;
+    fieldsFilled: number;
+    fieldsTotal: number;
+    error?: string;
+  } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -164,43 +174,31 @@ export default function InAppApplyModal({
 
     const questionsWithAI = APPLICATION_QUESTIONS.filter(q => q.aiPrompt);
 
-    // Run all AI calls in parallel for speed
-    const results = await Promise.all(
-      questionsWithAI.map(async (question) => {
-        try {
-          const response = await fetch("/api/ai-autofill", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              formFields: [{
-                id: question.id,
-                name: question.id,
-                type: "textarea",
-                label: question.aiPrompt
-              }],
-              jobDescription: `${opportunity.title} at ${opportunity.company}. ${opportunity.description || ""}`,
-              userProfile: profile,
-            }),
-          });
+    try {
+      // Send ALL questions in ONE API call to minimize rate limiting
+      const response = await fetch("/api/ai-autofill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formFields: questionsWithAI.map(q => ({
+            id: q.id,
+            name: q.id,
+            type: "textarea",
+            label: q.aiPrompt
+          })),
+          jobDescription: `${opportunity.title} at ${opportunity.company}. ${opportunity.description || ""}`,
+          userProfile: profile,
+        }),
+      });
 
-          const data = await response.json();
-          if (data.success && data.filledData) {
-            const answer = data.filledData[question.id] || data.filledData[Object.keys(data.filledData)[0]];
-            return { id: question.id, answer };
-          }
-        } catch (error) {
-          console.error(`AI generation error for ${question.id}:`, error);
-        }
-        return null;
-      })
-    );
-
-    // Update form data with all answers at once
-    const newAnswers: Record<string, string> = {};
-    results.forEach((result) => {
-      if (result?.answer) newAnswers[result.id] = result.answer;
-    });
-    setFormData(prev => ({ ...prev, ...newAnswers }));
+      const data = await response.json();
+      if (data.success && data.filledData) {
+        // Update all answers at once
+        setFormData(prev => ({ ...prev, ...data.filledData }));
+      }
+    } catch (error) {
+      console.error("AI generation error:", error);
+    }
 
     setGeneratingAI(null);
     setGeneratingAll(false);
@@ -210,6 +208,47 @@ export default function InAppApplyModal({
     await navigator.clipboard.writeText(text);
     setCopiedField(fieldId);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleAutoApply = async () => {
+    if (!opportunity.url) {
+      alert("No job URL available for auto-apply");
+      return;
+    }
+
+    setIsAutoApplying(true);
+    setAutoApplyResult(null);
+
+    try {
+      const response = await fetch("/api/auto-apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobUrl: opportunity.url,
+          jobId: opportunity.id,
+          aiAnswers: formData,
+          autoSubmit: false
+        }),
+      });
+
+      const result = await response.json();
+      setAutoApplyResult(result);
+
+      if (result.success) {
+        // Open the job URL in a new tab so user can review
+        window.open(opportunity.url, "_blank");
+      }
+    } catch (error) {
+      setAutoApplyResult({
+        success: false,
+        status: "error",
+        fieldsFilled: 0,
+        fieldsTotal: 0,
+        error: "Auto-apply failed. Try manual apply."
+      });
+    } finally {
+      setIsAutoApplying(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -515,6 +554,48 @@ export default function InAppApplyModal({
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 safe-area-bottom">
+          {/* Auto-Apply Button */}
+          {opportunity.url && (
+            <div className="mb-3">
+              <button
+                onClick={handleAutoApply}
+                disabled={isAutoApplying}
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-all active:scale-[0.98]"
+              >
+                {isAutoApplying ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Auto-Filling Form...
+                  </>
+                ) : (
+                  <>
+                    <Bot className="w-5 h-5" />
+                    Auto-Fill on Company Site
+                    <ExternalLink className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+              {autoApplyResult && (
+                <div className={`mt-2 p-3 rounded-lg text-sm ${
+                  autoApplyResult.success
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}>
+                  {autoApplyResult.success
+                    ? `Filled ${autoApplyResult.fieldsFilled}/${autoApplyResult.fieldsTotal} fields! Review in new tab.`
+                    : autoApplyResult.error || `Failed: ${autoApplyResult.status}`
+                  }
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">or track manually</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -528,7 +609,7 @@ export default function InAppApplyModal({
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                Submit Application
+                Track Application
               </>
             )}
           </button>

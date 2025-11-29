@@ -5,6 +5,41 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Simple delay function
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry with exponential backoff for rate limits
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 21000 // 21 seconds (OpenAI says "try again in 20s")
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: unknown) {
+      lastError = error as Error;
+
+      // Check if it's a rate limit error
+      const isRateLimit = error instanceof Error &&
+        ('status' in error && (error as { status: number }).status === 429);
+
+      if (isRateLimit && attempt < maxRetries) {
+        const waitTime = initialDelay * Math.pow(1.5, attempt);
+        console.log(`Rate limited. Waiting ${waitTime / 1000}s before retry ${attempt + 1}/${maxRetries}`);
+        await delay(waitTime);
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { formFields, jobDescription, userProfile } = await request.json();
@@ -44,15 +79,17 @@ For each form field, provide the best value from the candidate's profile or gene
 Return a JSON object where keys are the field identifiers and values are what should be filled in.
 Example format: {"field_name": "value to fill", "field_email": "email@example.com"}`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 2000,
-    });
+    const completion = await retryWithBackoff(() =>
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+      })
+    );
 
     const responseText = completion.choices[0]?.message?.content || "{}";
 

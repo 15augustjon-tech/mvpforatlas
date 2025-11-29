@@ -52,34 +52,24 @@ export default function BatchApplyModal({
       work_auth: "Yes",
     };
 
-    // Run all AI calls in parallel for speed
-    const results = await Promise.all(
-      questions.map(async (questionId) => {
-        try {
-          const response = await fetch("/api/ai-autofill", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              formFields: [{ id: questionId, name: questionId, type: "textarea", label: questionId }],
-              jobDescription: `${job.title} at ${job.company}. ${job.description || ""}`,
-              userProfile: profile,
-            }),
-          });
-          const data = await response.json();
-          if (data.success && data.filledData) {
-            const answer = data.filledData[questionId] || data.filledData[Object.keys(data.filledData)[0]];
-            return { questionId, answer };
-          }
-        } catch (error) {
-          console.error(`Error generating ${questionId}:`, error);
-        }
-        return null;
-      })
-    );
-
-    results.forEach((result) => {
-      if (result?.answer) jobAnswers[result.questionId] = result.answer;
-    });
+    try {
+      // Send ALL questions in ONE API call to minimize rate limiting
+      const response = await fetch("/api/ai-autofill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formFields: questions.map(q => ({ id: q, name: q, type: "textarea", label: q })),
+          jobDescription: `${job.title} at ${job.company}. ${job.description || ""}`,
+          userProfile: profile,
+        }),
+      });
+      const data = await response.json();
+      if (data.success && data.filledData) {
+        Object.assign(jobAnswers, data.filledData);
+      }
+    } catch (error) {
+      console.error("Error generating answers:", error);
+    }
 
     setAnswers(prev => ({ ...prev, [job.id]: jobAnswers }));
     setIsGenerating(false);
@@ -125,33 +115,32 @@ export default function BatchApplyModal({
       return;
     }
 
-    // Generate all missing answers in parallel
+    // Generate missing answers sequentially to avoid rate limits
     const jobsNeedingAnswers = opportunities.filter((job, i) => !completed.has(i) && !answers[job.id]);
-    if (jobsNeedingAnswers.length > 0) {
-      await Promise.all(jobsNeedingAnswers.map(job => generateAnswersForJob(job)));
+    for (const job of jobsNeedingAnswers) {
+      await generateAnswersForJob(job);
     }
 
-    // Submit all applications in parallel
-    await Promise.all(
-      opportunities.map(async (job, i) => {
-        if (completed.has(i)) return;
+    // Submit all applications (DB calls don't have rate limits)
+    for (let i = 0; i < opportunities.length; i++) {
+      const job = opportunities[i];
+      if (completed.has(i)) continue;
 
-        try {
-          await supabase.from("applications").insert({
-            user_id: user.id,
-            opportunity_id: job.id,
-            opportunity_title: job.title,
-            company_name: job.company,
-            status: "applied",
-            application_data: answers[job.id] || {},
-            job_url: job.url,
-          });
-          setCompleted(prev => new Set(prev).add(i));
-        } catch (error) {
-          console.error(`Error applying to ${job.company}:`, error);
-        }
-      })
-    );
+      try {
+        await supabase.from("applications").insert({
+          user_id: user.id,
+          opportunity_id: job.id,
+          opportunity_title: job.title,
+          company_name: job.company,
+          status: "applied",
+          application_data: answers[job.id] || {},
+          job_url: job.url,
+        });
+        setCompleted(prev => new Set(prev).add(i));
+      } catch (error) {
+        console.error(`Error applying to ${job.company}:`, error);
+      }
+    }
 
     setIsSubmitting(false);
   };
