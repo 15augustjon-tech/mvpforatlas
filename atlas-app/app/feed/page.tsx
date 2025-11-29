@@ -28,6 +28,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -45,6 +46,7 @@ export default function FeedPage() {
   useEffect(() => {
     loadProfile();
     loadSavedOpportunities();
+    loadAppliedOpportunities();
     loadWeeklyStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -83,6 +85,19 @@ export default function FeedPage() {
         .eq("user_id", user.id);
       if (data) {
         setSavedIds(new Set(data.map((s) => s.opportunity_id)));
+      }
+    }
+  };
+
+  const loadAppliedOpportunities = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from("applications")
+        .select("opportunity_id")
+        .eq("user_id", user.id);
+      if (data) {
+        setAppliedIds(new Set(data.map((a) => a.opportunity_id)));
       }
     }
   };
@@ -214,10 +229,20 @@ export default function FeedPage() {
         .eq("opportunity_id", selectedOpportunity.id);
     }
 
+    // Add to applied set so it disappears from feed
+    setAppliedIds(prev => new Set(prev).add(selectedOpportunity.id));
+
+    // Update weekly stats
+    setWeeklyStats(prev => ({ ...prev, applied: prev.applied + 1 }));
+
     setSelectedOpportunity(null);
   };
 
   const filteredOpportunities = opportunities.filter((o) => {
+    // Hide already applied jobs
+    if (appliedIds.has(o.id)) {
+      return false;
+    }
     // Category filter
     if (activeFilter !== "all" && o.opportunity_type !== activeFilter) {
       return false;

@@ -31,7 +31,8 @@
       "Bash(open:*)",
       "Bash(npx tsc:*)",
       "Bash(curl:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx playwright install chromium)"
     ],
     "deny": [],
     "ask": []
