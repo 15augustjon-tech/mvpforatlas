@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, MapPin, GraduationCap, Briefcase, X, Plus, FileText, Upload, Download, Sparkles } from "lucide-react";
+import { LogOut, MapPin, GraduationCap, Briefcase, X, Plus, FileText, Upload, Download, Sparkles, Trash2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { downloadResume } from "@/lib/generateResume";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -20,6 +21,9 @@ export default function ProfilePage() {
   const [editingSkills, setEditingSkills] = useState(false);
   const [editingInterests, setEditingInterests] = useState(false);
   const [resumeUploading, setResumeUploading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -70,6 +74,29 @@ export default function ProfilePage() {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch("/api/account/delete", {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await supabase.auth.signOut();
+        router.push("/login");
+        router.refresh();
+      } else {
+        alert("Failed to delete account. Please try again.");
+      }
+    } catch {
+      alert("An error occurred. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const addSkill = async () => {
@@ -452,7 +479,83 @@ export default function ProfilePage() {
           <LogOut className="w-5 h-5" />
           Sign Out
         </button>
+
+        {/* Delete Account */}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 text-gray-text bg-white rounded-card hover:text-red-500 transition-colors"
+        >
+          <Trash2 className="w-5 h-5" />
+          Delete Account
+        </button>
+
+        {/* Legal Links */}
+        <div className="flex justify-center gap-4 pt-4 text-sm">
+          <Link href="/terms" className="text-gray-text hover:text-teal">
+            Terms of Service
+          </Link>
+          <Link href="/privacy" className="text-gray-text hover:text-teal">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-navy">Delete Account</h3>
+            </div>
+
+            <p className="text-gray-text mb-4">
+              This action is permanent and cannot be undone. All your data, including:
+            </p>
+            <ul className="text-sm text-gray-text mb-4 list-disc list-inside">
+              <li>Your profile information</li>
+              <li>Saved opportunities</li>
+              <li>Application history</li>
+              <li>Resume and documents</li>
+            </ul>
+            <p className="text-gray-text mb-4">
+              will be permanently deleted.
+            </p>
+
+            <p className="text-sm font-medium text-navy mb-2">
+              Type DELETE to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                }}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-text hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                className="flex-1 py-2 bg-red-500 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600"
+              >
+                {deleting ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

@@ -123,6 +123,18 @@ export default function SignupPage() {
             Sign in
           </Link>
         </p>
+
+        {/* Legal Links */}
+        <p className="text-center mt-4 text-xs text-gray-text">
+          By creating an account, you agree to our{" "}
+          <Link href="/terms" className="text-teal hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-teal hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
       </div>
     </div>
   );
