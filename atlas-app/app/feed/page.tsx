@@ -8,7 +8,8 @@ import OpportunityCard from "@/components/OpportunityCard";
 import FilterChip from "@/components/FilterChip";
 import InAppApplyModal from "@/components/InAppApplyModal";
 import BatchApplyModal from "@/components/BatchApplyModal";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { FeedSkeleton } from "@/components/Skeleton";
+import { useToast } from "@/components/Toast";
 import { createClient } from "@/lib/supabase/client";
 import { Opportunity, Profile } from "@/types/database";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ export default function FeedPage() {
   const [showBatchModal, setShowBatchModal] = useState(false);
   const supabase = createClient();
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadProfile();
@@ -148,6 +150,7 @@ export default function FeedPage() {
         next.delete(opportunity.id);
         return next;
       });
+      showToast("Removed from saved", "info");
     } else {
       // Save
       await supabase.from("saved_opportunities").insert({
@@ -157,6 +160,7 @@ export default function FeedPage() {
         opportunity_data: opportunity,
       });
       setSavedIds((prev) => new Set(prev).add(opportunity.id));
+      showToast("Saved to your list", "success");
     }
   };
 
@@ -367,7 +371,7 @@ export default function FeedPage() {
       {/* Feed */}
       <div className="px-4">
         {loading ? (
-          <LoadingSpinner />
+          <FeedSkeleton />
         ) : filteredOpportunities.length > 0 ? (
           filteredOpportunities.map((opportunity) => (
             <OpportunityCard

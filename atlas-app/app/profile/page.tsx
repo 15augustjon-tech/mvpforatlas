@@ -10,6 +10,8 @@ import BottomNav from "@/components/BottomNav";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/types/database";
+import { useToast } from "@/components/Toast";
+import { ProfileSkeleton } from "@/components/Skeleton";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -26,6 +28,7 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadProfile();
@@ -86,14 +89,15 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
+        showToast("Account deleted successfully", "success");
         await supabase.auth.signOut();
         router.push("/login");
         router.refresh();
       } else {
-        alert("Failed to delete account. Please try again.");
+        showToast("Failed to delete account. Please try again.", "error");
       }
     } catch {
-      alert("An error occurred. Please try again.");
+      showToast("An error occurred. Please try again.", "error");
     } finally {
       setDeleting(false);
     }
@@ -180,8 +184,10 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-light flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-gray-light pb-20">
+        <Header />
+        <ProfileSkeleton />
+        <BottomNav />
       </div>
     );
   }
